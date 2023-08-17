@@ -1,0 +1,41 @@
+Multi-Fidelity Optimization In General
+
+Exploit cheap approximations of an expensive blackbox function → afford more configurations
+
+Idea: eliminate poor configurations early, allocate more resources to promising ones.
+
+Possible Resources:
+- Data subset size
+- Runtime / # epochs / # iterations
+- Downsampled size of images in object recognition
+- Depth / width of neural networks
+- Number of trees
+- Number of features
+- Number of cross validation folds
+
+
+Goal: find approximations g that are very cheap but have high rank correlations with f
+
+
+Successive Halving (SH)
+----------
+1. Sample N configurations uniformly at random & evaluate them on the cheapest fidelity
+2. Keep the best half (or third), move them to the next fidelity
+3. Iterate until the most expensive fidelity (= original expensive black box)
+
+
+An Extension of SH with Theoretical Guarantees: Hyperband
+---------
+Main Idea: hedge against errors in cheap approximations
+Algorithm: run multiple copies of SH in parallel, starting at different cheapest fidelities
+
+
+BOHB
+---------
+Combines the advantages of Bayesian Optimization and Hyperband
+- Bayesian Optimization for choosing configurations to achieve strong final performance
+- Hyperband to choose the budgets for good anytime performance
+
+BOHB replaces the random selection of configurations at the beginning of each HB  iteration by a model-based search
+- Variant of the Tree Parzen Estimator, with a product kernel
+- Models are fitted independently to the data for one budget at a time (Specifically, always the highest budget that has enough data points)
