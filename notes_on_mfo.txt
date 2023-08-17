@@ -39,3 +39,29 @@ Combines the advantages of Bayesian Optimization and Hyperband
 BOHB replaces the random selection of configurations at the beginning of each HB  iteration by a model-based search
 - Variant of the Tree Parzen Estimator, with a product kernel
 - Models are fitted independently to the data for one budget at a time (Specifically, always the highest budget that has enough data points)
+
+
+Fabolas (Entropy Search for Multi-Fidelity Optimization)
+--------
+it uses entropy search
+- define the pmin distribution given the data and use entropy search to minimize the entropy
+find the biggest reduction in entropy per time spent
+
+
+Learning curve prediction
+--------
+Observe learning curve for the first n steps
+Extrapolation: fit parametric model on partial learning curve to predict remaining learning curve
+- need for probabilistic predictions / quantification of uncertainty
+
+1. Parametric Learning Curves (manual selection of models/can't learn across HPs)
+- Use a parametric model fk with parameters θ to model performance at step t 
+- Linear combination of K = 11 parametric types of models:
+- Use Markov Chain Monte Carlo sampling of ξ to obtain uncertainties
+
+2. Sequence models (e.g. Bayesian RNN)
+- Learning curves are sequences we can use an RNN (in particular, an LSTM) to predict the next value from a given sequence
+- We can use variational dropout to obtain uncertainty estimates
+
+3. Baker et al. approach (simple / easy to implement / requires fully evaluated learning curves as training data)
+- Idea: map from configurations (including architectural hyperparameters) and partial learning curves to the final performance
