@@ -1,0 +1,267 @@
+{
+  "incumbent_ids": [
+    10
+  ],
+  "rejected_config_ids": [
+    8
+  ],
+  "incumbents_changed": 2,
+  "trajectory": [
+    {
+      "config_ids": [
+        8
+      ],
+      "costs": [
+        0.47997601498035125
+      ],
+      "trial": 2,
+      "walltime": 564.8446655273438
+    },
+    {
+      "config_ids": [
+        10
+      ],
+      "costs": [
+        0.4382620818214672
+      ],
+      "trial": 9,
+      "walltime": 1447.6996140480042
+    }
+  ],
+  "state": {
+    "tracker": {
+      "0,0": [
+        [
+          0,
+          [
+            {
+              "batch_size": 77,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 0.00018662266976517952,
+              "n_channels_conv_0": 107,
+              "n_channels_fc_0": 122,
+              "n_conv_layers": 3,
+              "n_fc_layers": 2,
+              "use_BN": true,
+              "n_channels_conv_1": 17,
+              "n_channels_conv_2": 138,
+              "n_channels_fc_1": 63
+            },
+            {
+              "batch_size": 96,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 0.0008663279761354553,
+              "n_channels_conv_0": 379,
+              "n_channels_fc_0": 54,
+              "n_conv_layers": 2,
+              "n_fc_layers": 3,
+              "use_BN": true,
+              "n_channels_conv_1": 285,
+              "n_channels_fc_1": 48,
+              "n_channels_fc_2": 47
+            },
+            {
+              "batch_size": 28,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 2.6919058249260695e-05,
+              "n_channels_conv_0": 439,
+              "n_channels_fc_0": 66,
+              "n_conv_layers": 2,
+              "n_fc_layers": 1,
+              "use_BN": false,
+              "n_channels_conv_1": 76
+            },
+            {
+              "batch_size": 84,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 0.006780227021579835,
+              "n_channels_conv_0": 211,
+              "n_channels_fc_0": 52,
+              "n_conv_layers": 2,
+              "n_fc_layers": 3,
+              "use_BN": true,
+              "n_channels_conv_1": 160,
+              "n_channels_fc_1": 21,
+              "n_channels_fc_2": 19
+            }
+          ]
+        ],
+        [
+          0,
+          [
+            {
+              "batch_size": 49,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 0.00473990966765613,
+              "n_channels_conv_0": 355,
+              "n_channels_fc_0": 35,
+              "n_conv_layers": 2,
+              "n_fc_layers": 1,
+              "use_BN": true,
+              "n_channels_conv_1": 32
+            },
+            {
+              "batch_size": 72,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": true,
+              "kernel_size": 3,
+              "learning_rate_init": 0.000911176393359584,
+              "n_channels_conv_0": 224,
+              "n_channels_fc_0": 75,
+              "n_conv_layers": 2,
+              "n_fc_layers": 1,
+              "use_BN": false,
+              "n_channels_conv_1": 133
+            },
+            {
+              "batch_size": 84,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": true,
+              "kernel_size": 3,
+              "learning_rate_init": 0.00012667345328336828,
+              "n_channels_conv_0": 511,
+              "n_channels_fc_0": 70,
+              "n_conv_layers": 3,
+              "n_fc_layers": 1,
+              "use_BN": false,
+              "n_channels_conv_1": 46,
+              "n_channels_conv_2": 32
+            },
+            {
+              "batch_size": 123,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 0.0009042943346173956,
+              "n_channels_conv_0": 42,
+              "n_channels_fc_0": 37,
+              "n_conv_layers": 3,
+              "n_fc_layers": 2,
+              "use_BN": false,
+              "n_channels_conv_1": 101,
+              "n_channels_conv_2": 123,
+              "n_channels_fc_1": 27
+            }
+          ]
+        ]
+      ],
+      "1,0": [
+        [
+          0,
+          [
+            {
+              "batch_size": 97,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 0.0005284157412383816,
+              "n_channels_conv_0": 298,
+              "n_channels_fc_0": 40,
+              "n_conv_layers": 3,
+              "n_fc_layers": 3,
+              "use_BN": true,
+              "n_channels_conv_1": 407,
+              "n_channels_conv_2": 26,
+              "n_channels_fc_1": 24,
+              "n_channels_fc_2": 33
+            },
+            {
+              "batch_size": 88,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": true,
+              "kernel_size": 3,
+              "learning_rate_init": 0.00019690434802692816,
+              "n_channels_conv_0": 409,
+              "n_channels_fc_0": 104,
+              "n_conv_layers": 3,
+              "n_fc_layers": 1,
+              "use_BN": true,
+              "n_channels_conv_1": 122,
+              "n_channels_conv_2": 61
+            },
+            {
+              "batch_size": 17,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": false,
+              "kernel_size": 3,
+              "learning_rate_init": 0.00020304615777978822,
+              "n_channels_conv_0": 48,
+              "n_channels_fc_0": 56,
+              "n_conv_layers": 1,
+              "n_fc_layers": 3,
+              "use_BN": false,
+              "n_channels_fc_1": 41,
+              "n_channels_fc_2": 16
+            }
+          ]
+        ]
+      ]
+    },
+    "next_bracket": 2
+  }
+}

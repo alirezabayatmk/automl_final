@@ -174,7 +174,7 @@ def cnn_from_cfg(
     ds_path = cfg["datasetpath"]
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
-    img_size = max(4, int(np.floor(budget)))  # example fidelity to use
+    img_size = max(8, int(np.floor(budget)))  # example fidelity to use
 
     # Device configuration
     torch.manual_seed(seed)
@@ -227,7 +227,7 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(20):  # 20 epochs
+        for epoch in range(5):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
             logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
             train_score, train_loss = model.train_fn(
@@ -247,6 +247,75 @@ def cnn_from_cfg(
     results = val_error
     return results
 
+def joint_optimization(
+    cfg: Configuration,
+    seed: int,
+    budget: float,
+):
+    # Extract architectural hyperparameters
+    arch_params = {
+        "n_conv_layers": cfg["n_conv_layers"],
+        "use_BN": cfg["use_BN"],
+        # ... add other architectural hyperparameters here ...
+    }
+
+    # Extract non-architectural hyperparameters
+    non_arch_params = {
+        "batch_size": cfg["batch_size"],
+        "learning_rate_init": cfg["learning_rate_init"],
+        # ... add other non-architectural hyperparameters here ...
+    }
+
+    # Your joint optimization process here
+    # You can implement your algorithm to jointly optimize arch_params and non_arch_params
+
+    # Return a metric that you want to optimize
+
+    return None
+
+def multi_fidelity_optimization(
+    config: Configuration,
+    seed: int,
+    budget: float,
+    mf_budget: float,
+):
+    # Your multi-fidelity optimization process here
+    # This function takes the main hyperparameters (config), the random seed, and the main budget
+    # as well as the multi-fidelity budget (mf_budget)
+
+    # You can implement your multi-fidelity optimization algorithm using these inputs
+
+    # Return a metric that you want to optimize
+
+    return None
+
+def nas_with_multi_fidelity(
+    config: Configuration,
+    seed: int,
+    budget: float,
+    mf_budget: float,
+):
+    # Your NAS with multi-fidelity optimization process here
+    # This function takes the main hyperparameters (config), the random seed, and the main budget
+    # as well as the multi-fidelity budget (mf_budget)
+
+    # You can implement your NAS algorithm using these inputs along with multi-fidelity optimization
+
+    # Return a metric that you want to optimize
+
+    return None
+
+def explore_fidelity_impact(
+    config: Configuration,
+    seed: int,
+    budget: float,
+):
+    # Your optimization process here
+    # You can implement your algorithm using the provided budget
+
+    # Return a metric that you want to optimize
+
+    return None
 
 if __name__ == "__main__":
     """
@@ -267,16 +336,18 @@ if __name__ == "__main__":
         type=str,
         help="directory where intermediate results are stored",
     )
+    # 21600 default
     parser.add_argument(
         "--runtime",
-        default=21600,
+        default=1200,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
+    # 10 default
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=10,
+        default=5,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
@@ -287,11 +358,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--device", type=str, default="cpu", help="device to run the models"
     )
+    # default 4
     parser.add_argument(
-        "--workers", type=int, default=4, help="num of workers to use with BOHB"
+        "--workers", type=int, default=8, help="num of workers to use with BOHB"
     )
+    #default 500
     parser.add_argument(
-        "--n_trials", type=int, default=500, help="Number of iterations to run SMAC for"
+        "--n_trials", type=int, default=100, help="Number of iterations to run SMAC for"
     )
     parser.add_argument(
         "--cv_count",
@@ -315,7 +388,7 @@ if __name__ == "__main__":
         default="NOTSET",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="debug_configspace.json",
+    parser.add_argument('--configspace', type=Path, default="default_configspace.json",
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
