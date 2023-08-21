@@ -1,19 +1,16 @@
-"""
-===========================
-Optimization using BOHB
-===========================
-"""
-from __future__ import annotations
-
+# Import necessary libraries
 import argparse
 import logging
+import os
+import json
+import numpy as np
+import torch
+import matplotlib.pyplot as plt
+
 from pathlib import Path
 from typing import Any, Mapping, Optional
 from functools import partial
 import time
-
-import numpy as np
-import torch
 
 from ConfigSpace import (
     Configuration,
@@ -22,7 +19,7 @@ from ConfigSpace import (
     Integer,
     Constant,
     InCondition,
-    Categorical
+    Categorical,
 )
 from ConfigSpace.read_and_write import json as cs_json
 from ConfigSpace.read_and_write import pcs_new, pcs
@@ -133,7 +130,7 @@ def get_optimizer_and_criterion(
         train_criterion = torch.nn.CrossEntropyLoss
 
     return model_optimizer, train_criterion
-
+    
 
 # Target Algorithm
 # The signature of the function determines what arguments are passed to it
@@ -246,15 +243,75 @@ def cnn_from_cfg(
 
     results = val_error
     return results
+    
+
+# New: Define multiple fidelities (budget types) with min and max budgets
+BUDGET_TYPES = {
+    "img_size": {"min": 8, "max": 32, "values": [8, 16, 32]},
+    "num_samples": {"min": 500, "max": 10000, "values": [1000, 2000, 4000, 6000, 10000]},
+    "num_epochs": {"min": 5, "max": 20, "values": [5, 10, 15, 20]},
+    "runtime": {"min": 1000, "max": 21600, "values": [1000, 2000, 5000, 10000, 21600]},
+    "cv_folds": {"min": 3, "max": 10, "values": [3, 5, 7, 10]},
+}
+
+
+def run_bohb_for_fidelity(fidelity_type, budget_values):
+    for budget_value in budget_values:
+        min_budget = BUDGET_TYPES[fidelity_type]["min"]
+        max_budget = BUDGET_TYPES[fidelity_type]["max"]
+        print(f"Using {fidelity_type} budget: {budget_value}")
+        scenario = Scenario(
+            name=f"ExampleMFRunWithBOHB_{fidelity_type}_{budget_value}",
+            configspace=configspace,
+            deterministic=True,
+            output_directory=os.path.join(
+                args.working_dir, f"results_{fidelity_type}"
+            ),
+            seed=args.seed,
+            n_trials=args.n_trials,
+            max_budget=max_budget,
+            min_budget=min_budget,
+            n_workers=args.workers,
+            walltime_limit=min(args.runtime, budget_value),
+        )
+
+        smac = SMAC4MF(
+            target_function=cnn_from_cfg,
+            scenario=scenario,
+            initial_design=SMAC4MF.get_initial_design(
+                scenario=scenario, n_configs=2
+            ),
+            intensifier=Hyperband(
+                scenario=scenario,
+                incumbent_selection="highest_budget",
+                eta=args.eta,
+            ),
+            overwrite=True,
+            logging_level=args.log_level,
+        )
+
+        incumbent = smac.optimize()
+
+
+# New: Function to plot results for each fidelity
+def plot_results(results, fidelity_type, budget_values):
+    plt.figure(figsize=(10, 6))
+    plt.plot(budget_values, results, marker="o")
+    plt.xlabel(f"Fidelity: {fidelity_type}")
+    plt.ylabel("Validation Error")
+    plt.title(f"Validation Error vs {fidelity_type}")
+    plt.grid(True)
+    plt.savefig(
+        os.path.join(
+            "figures", "fidelities", f"{fidelity_type}_results.png"
+        )
+    )
+    plt.show()
 
 
 if __name__ == "__main__":
-    """
-    This is just an example of how to implement BOHB as an optimizer!
-    Here we do not consider any of the forbidden clauses.
-    """
-
     parser = argparse.ArgumentParser(description="MF example using BOHB.")
+
     parser.add_argument(
         "--dataset",
         choices=["deepweedsx", "deepweedsx_balanced", "fashion_mnist"],
@@ -323,8 +380,9 @@ if __name__ == "__main__":
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
+
     args = parser.parse_args()
-    
+
     logging.basicConfig(level=args.log_level)
 
     configspace = configuration_space(
@@ -332,36 +390,33 @@ if __name__ == "__main__":
         dataset=args.dataset,
         cv_count=args.cv_count,
         datasetpath=args.datasetpath,
-        cs_file=args.configspace
+        cs_file=args.configspace,
     )
 
-    # Setting up SMAC to run BOHB
-    scenario = Scenario(
-        name="ExampleMFRunWithBOHB",
-        configspace=configspace,
-        deterministic=True,
-        output_directory=args.working_dir,
-        seed=args.seed,
-        n_trials=args.n_trials,
-        max_budget=args.max_budget,
-        min_budget=args.min_budget,
-        n_workers=args.workers,
-        walltime_limit=args.runtime
-    )
+    # New: Run BOHB optimization for each fidelity type and values
+    for fidelity_type, budget_data in BUDGET_TYPES.items():
+        budget_values = budget_data["values"]
+        run_bohb_for_fidelity(fidelity_type, budget_values)
 
-    # You can mess with SMACs own hyperparameters here (checkout the documentation at https://automl.github.io/SMAC3)
-    smac = SMAC4MF(
-        target_function=cnn_from_cfg,
-        scenario=scenario,
-        initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=2),
-        intensifier=Hyperband(
-            scenario=scenario,
-            incumbent_selection="highest_budget",
-            eta=args.eta,
-        ),
-        overwrite=True,
-        logging_level=args.log_level,  # https://automl.github.io/SMAC3/main/advanced_usage/8_logging.html
-    )
-
-    # Start optimization
-    incumbent = smac.optimize()
+    # New: Loop to load and plot results for each fidelity type
+    for fidelity_type, budget_data in BUDGET_TYPES.items():
+        budget_values = budget_data["values"]
+        results = []
+        for budget_value in budget_values:
+            result_file = os.path.join(
+                args.working_dir,
+                f"results_{fidelity_type}",
+                f"SMAC4MF_scenario_results_run_1",
+                f"run_1",
+                f"traj-run_1",
+                f"{budget_value}_SMAC4MF_result.json",
+            )
+            if os.path.exists(result_file):
+                with open(result_file, "r") as f:
+                    result_data = json.load(f)
+                results.append(result_data["cost"])
+            else:
+                results.append(None)
+        plot_results(
+            results, fidelity_type, budget_values
+        )

@@ -1,0 +1,37 @@
+{
+  "incumbent_ids": [],
+  "rejected_config_ids": [],
+  "incumbents_changed": 0,
+  "trajectory": [],
+  "state": {
+    "tracker": {
+      "0,0": [
+        [
+          0,
+          [
+            {
+              "batch_size": 81,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/home/shady/Projects/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": true,
+              "kernel_size": 3,
+              "learning_rate_init": 0.0030677508679378784,
+              "n_channels_conv_0": 32,
+              "n_channels_fc_0": 82,
+              "n_conv_layers": 1,
+              "n_fc_layers": 3,
+              "use_BN": false,
+              "n_channels_fc_1": 36,
+              "n_channels_fc_2": 35
+            }
+          ]
+        ]
+      ]
+    },
+    "next_bracket": 0
+  }
+}
