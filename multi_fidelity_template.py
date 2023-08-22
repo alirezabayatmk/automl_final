@@ -227,7 +227,7 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(5):  # 20 epochs
+        for epoch in range(10):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
             logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
             train_score, train_loss = model.train_fn(
@@ -270,7 +270,7 @@ if __name__ == "__main__":
     # 21600 default
     parser.add_argument(
         "--runtime",
-        default=1200,
+        default=3600,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -278,7 +278,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=5,
+        default=8,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
@@ -295,7 +295,7 @@ if __name__ == "__main__":
     )
     #default 500
     parser.add_argument(
-        "--n_trials", type=int, default=100, help="Number of iterations to run SMAC for"
+        "--n_trials", type=int, default=200, help="Number of iterations to run SMAC for"
     )
     parser.add_argument(
         "--cv_count",

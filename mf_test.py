@@ -251,7 +251,6 @@ BUDGET_TYPES = {
     "num_samples": {"min": 500, "max": 10000, "values": [1000, 2000, 4000, 6000, 10000]},
     "num_epochs": {"min": 5, "max": 20, "values": [5, 10, 15, 20]},
     "runtime": {"min": 1000, "max": 21600, "values": [1000, 2000, 5000, 10000, 21600]},
-    "cv_folds": {"min": 3, "max": 10, "values": [3, 5, 7, 10]},
 }
 
 
