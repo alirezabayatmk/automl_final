@@ -68,7 +68,7 @@ class MLP:
 
         return cs
 
-    def train(self, config: Configuration, seed: int = 0, budget_type: str = 'epoch', budget: int = 25) -> float:
+    def train_epoch(self, config: Configuration, seed: int = 0, budget: int = 25) -> float:
         # For deactivated parameters (by virtue of the conditions),
         # the configuration stores None-values.
         # This is not accepted by the MLP, so we replace them with placeholder values.
@@ -79,20 +79,34 @@ class MLP:
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
 
-            if budget_type == "epoch":
-                max_iter = budget
-                n_splits = 5
-                sampling_ratio = 100
-            elif budget_type == "cv_splits":
-                max_iter = 25
-                n_splits = budget
-                sampling_ratio = 100
-            elif budget_type == "sampling_ratio":
-                max_iter = 25
-                n_splits = 5
-                sampling_ratio = budget
-            else:
-                raise ValueError("Invalid budget_type")
+            classifier = MLPClassifier(
+                hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
+                solver=config["solver"],
+                batch_size=batch_size,
+                activation=config["activation"],
+                learning_rate=lr,
+                learning_rate_init=lr_init,
+                max_iter=int(np.ceil(budget)),
+                random_state=seed,
+            )
+
+            # Returns the 5-fold cross validation accuracy
+            cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)  # to make CV splits consistent
+            score = cross_val_score(classifier, dataset.data, dataset.target, cv=cv, error_score="raise")
+
+        return 1 - np.mean(score)
+
+
+    def train_cv(self, config: Configuration, seed: int = 0, budget: int = 10) -> float:
+        # For deactivated parameters (by virtue of the conditions),
+        # the configuration stores None-values.
+        # This is not accepted by the MLP, so we replace them with placeholder values.
+        lr = config.get("learning_rate", "constant")
+        lr_init = config.get("learning_rate_init", 0.001)
+        batch_size = config.get("batch_size", 200)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
 
             classifier = MLPClassifier(
                 hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
@@ -101,79 +115,49 @@ class MLP:
                 activation=config["activation"],
                 learning_rate=lr,
                 learning_rate_init=lr_init,
-                max_iter=int(np.ceil(max_iter)),
+                max_iter=25,
                 random_state=seed,
             )
 
             # Returns the 5-fold cross validation accuracy
-            cv = StratifiedKFold(n_splits=int(np.ceil(n_splits)), random_state=seed, shuffle=True)  # to make CV splits consistent
-            sampled_data, sampled_target = random_subset(dataset, int(np.ceil(sampling_ratio)))
+            cv = StratifiedKFold(n_splits=int(np.ceil(budget)), random_state=seed, shuffle=True)  # to make CV splits consistent
+            score = cross_val_score(classifier, dataset.data, dataset.target, cv=cv, error_score="raise")
+
+        return 1 - np.mean(score)
+
+
+    def train_subset(self, config: Configuration, seed: int = 0, budget: int = 100) -> float:
+        # For deactivated parameters (by virtue of the conditions),
+        # the configuration stores None-values.
+        # This is not accepted by the MLP, so we replace them with placeholder values.
+        lr = config.get("learning_rate", "constant")
+        lr_init = config.get("learning_rate_init", 0.001)
+        batch_size = config.get("batch_size", 200)
+
+        with warnings.catch_warnings():
+            warnings.filterwarnings("ignore")
+
+            classifier = MLPClassifier(
+                hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
+                solver=config["solver"],
+                batch_size=batch_size,
+                activation=config["activation"],
+                learning_rate=lr,
+                learning_rate_init=lr_init,
+                max_iter=25,
+                random_state=seed,
+            )
+
+            # Returns the 5-fold cross validation accuracy
+            cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)  # to make CV splits consistent
+            sampled_data, sampled_target = random_subset(dataset, int(np.ceil(budget)))
             score = cross_val_score(classifier, sampled_data, sampled_target, cv=cv, error_score="raise")
 
         return 1 - np.mean(score)
 
 
-    # def train(self, config: Configuration, seed: int = 0, budget: int = 10) -> float:
-    #     # For deactivated parameters (by virtue of the conditions),
-    #     # the configuration stores None-values.
-    #     # This is not accepted by the MLP, so we replace them with placeholder values.
-    #     lr = config.get("learning_rate", "constant")
-    #     lr_init = config.get("learning_rate_init", 0.001)
-    #     batch_size = config.get("batch_size", 200)
 
-    #     with warnings.catch_warnings():
-    #         warnings.filterwarnings("ignore")
-
-    #         classifier = MLPClassifier(
-    #             hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
-    #             solver=config["solver"],
-    #             batch_size=batch_size,
-    #             activation=config["activation"],
-    #             learning_rate=lr,
-    #             learning_rate_init=lr_init,
-    #             max_iter=25,
-    #             random_state=seed,
-    #         )
-
-    #         # Returns the 5-fold cross validation accuracy
-    #         cv = StratifiedKFold(n_splits=int(np.ceil(budget)), random_state=seed, shuffle=True)  # to make CV splits consistent
-    #         score = cross_val_score(classifier, dataset.data, dataset.target, cv=cv, error_score="raise")
-
-    #     return 1 - np.mean(score)
-
-
-    # def train(self, config: Configuration, seed: int = 0, budget: int = 100) -> float:
-    #     # For deactivated parameters (by virtue of the conditions),
-    #     # the configuration stores None-values.
-    #     # This is not accepted by the MLP, so we replace them with placeholder values.
-    #     lr = config.get("learning_rate", "constant")
-    #     lr_init = config.get("learning_rate_init", 0.001)
-    #     batch_size = config.get("batch_size", 200)
-
-    #     with warnings.catch_warnings():
-    #         warnings.filterwarnings("ignore")
-
-    #         classifier = MLPClassifier(
-    #             hidden_layer_sizes=[config["n_neurons"]] * config["n_layer"],
-    #             solver=config["solver"],
-    #             batch_size=batch_size,
-    #             activation=config["activation"],
-    #             learning_rate=lr,
-    #             learning_rate_init=lr_init,
-    #             max_iter=25,
-    #             random_state=seed,
-    #         )
-
-    #         # Returns the 5-fold cross validation accuracy
-    #         cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)  # to make CV splits consistent
-    #         sampled_data, sampled_target = random_subset(dataset, int(np.ceil(budget)))
-    #         score = cross_val_score(classifier, sampled_data, sampled_target, cv=cv, error_score="raise")
-
-    #     return 1 - np.mean(score)
-
-
-
-def plot_trajectory(facades: list[AbstractFacade]) -> None:
+def plot_trajectory(facades: list[AbstractFacade], budget_types: list[str]) -> None:
     """Plots the trajectory (incumbents) of the optimization process."""
     plt.figure()
     plt.title("Trajectory")
@@ -181,7 +165,7 @@ def plot_trajectory(facades: list[AbstractFacade]) -> None:
     plt.ylabel(facades[0].scenario.objectives)
     plt.ylim(0, 0.4)
 
-    for facade in facades:
+    for facade, budget_type in zip(facades, budget_types):
         X, Y = [], []
         for item in facade.intensifier.trajectory:
             # Single-objective optimization
@@ -194,7 +178,7 @@ def plot_trajectory(facades: list[AbstractFacade]) -> None:
             X.append(x)
             Y.append(y)
 
-        plt.plot(X, Y, label=facade.intensifier.__class__.__name__)
+        plt.plot(X, Y, label=budget_type)  # Use budget_type as the label
         plt.scatter(X, Y, marker="x")
 
     plt.legend()
@@ -205,51 +189,65 @@ if __name__ == "__main__":
 
     facades: list[AbstractFacade] = []
 
-    # Only Hyperband optimization
     intensifier_object = Hyperband
 
     budget_types = ["epoch", "cv_splits", "sampling_ratio"]
-    mins_and_maxs = [(1, 100), (5, 25), (5, 100)]
+    mins_and_maxs = [(5, 25), (1, 10), (10, 100)]
 
     for budget_type, (min_budget, max_budget) in zip(budget_types, mins_and_maxs):
         print(f"Budget type: {budget_type}")
-        # Define our environment variables
+    
         scenario = Scenario(
             mlp.configspace,
-            walltime_limit=60,  # After 60 seconds, we stop the hyperparameter optimization
-            n_trials=500,  # Evaluate max 500 different trials
-            min_budget= min_budget,  # Minimum budget used during an evaluation of the MLP
-            max_budget= max_budget,  # Maximum budget used during an evaluation of the MLP
-            n_workers=16
+            walltime_limit=100,  
+            n_trials=500,  
+            min_budget= min_budget,  
+            max_budget= max_budget, 
+            n_workers=3,
+            name="MLPRunBudget({})".format(budget_type)
         )
 
-        # We want to run five random configurations before starting the optimization.
         initial_design = MFFacade.get_initial_design(scenario, n_configs=5)
 
-        # Create our intensifier
         intensifier = intensifier_object(scenario, incumbent_selection="highest_budget")
 
-        # Create our SMAC object and pass the scenario and the train method
-        smac = MFFacade(
-            scenario,
-            mlp.train,
-            initial_design=initial_design,
-            intensifier=intensifier,
-            overwrite=True,
-        )
+        if budget_type=='epoch':
+            smac = MFFacade(
+                scenario,
+                mlp.train_epoch,
+                initial_design=initial_design,
+                intensifier=intensifier,
+                overwrite=True,
+            )
 
-        # Let's optimize
+        elif budget_type=='cv_splits':
+            smac = MFFacade(
+                scenario,
+                mlp.train_cv,
+                initial_design=initial_design,
+                intensifier=intensifier,
+                overwrite=True,
+            )
+
+        elif budget_type=='sampling_ratio':
+            smac = MFFacade(
+                scenario,
+                mlp.train_subset,
+                initial_design=initial_design,
+                intensifier=intensifier,
+                overwrite=True,
+            )
+
         incumbent = smac.optimize()
 
-        # Get cost of default configuration
         default_cost = smac.validate(mlp.configspace.get_default_configuration())
         print(f"Default cost ({intensifier.__class__.__name__}): {default_cost}")
 
-        # Let's calculate the cost of the incumbent
         incumbent_cost = smac.validate(incumbent)
         print(f"Incumbent cost ({intensifier.__class__.__name__}): {incumbent_cost}")
 
         facades.append(smac)
 
-        # Let's plot it
-        plot_trajectory(facades)
+        plot_trajectory(facades, budget_types)
+
+        print('#'*50)

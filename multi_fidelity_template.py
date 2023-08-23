@@ -380,7 +380,7 @@ if __name__ == "__main__":
     smac = SMAC4MF(
         target_function=cnn_from_cfg,
         scenario=scenario,
-        initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=2),
+        initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=5),
         intensifier=Hyperband(
             scenario=scenario,
             incumbent_selection="highest_budget",

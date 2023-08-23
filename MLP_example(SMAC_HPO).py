@@ -1,4 +1,5 @@
 import warnings
+
 import matplotlib.pyplot as plt
 import numpy as np
 from ConfigSpace import (
@@ -13,21 +14,25 @@ from ConfigSpace import (
 from sklearn.datasets import load_digits
 from sklearn.model_selection import StratifiedKFold, cross_val_score
 from sklearn.neural_network import MLPClassifier
+
 from smac import MultiFidelityFacade as MFFacade
 from smac import Scenario
+from smac.facade import AbstractFacade
 from smac.intensifier.hyperband import Hyperband
+from smac.intensifier.successive_halving import SuccessiveHalving
+
+__copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
+__license__ = "3-clause BSD"
+
 
 dataset = load_digits()
 
-def sample_data(data, sampling_ratio):
-    num_samples = int(np.ceil(data.shape[0] * sampling_ratio))
-    sample_indices = np.random.choice(data.shape[0], num_samples, replace=False)
-    sampled_data = data[sample_indices]
-    return sampled_data
 
 class MLP:
     @property
     def configspace(self) -> ConfigurationSpace:
+        # Build Configuration Space which defines all parameters and their ranges.
+        # To illustrate different parameter types, we use continuous, integer and categorical parameters.
         cs = ConfigurationSpace()
 
         n_layer = Integer("n_layer", (1, 5), default=1)
@@ -38,36 +43,30 @@ class MLP:
         learning_rate = Categorical("learning_rate", ["constant", "invscaling", "adaptive"], default="constant")
         learning_rate_init = Float("learning_rate_init", (0.0001, 1.0), default=0.001, log=True)
 
+        # Add all hyperparameters at once:
         cs.add_hyperparameters([n_layer, n_neurons, activation, solver, batch_size, learning_rate, learning_rate_init])
 
+        # Adding conditions to restrict the hyperparameter space...
+        # ... since learning rate is only used when solver is 'sgd'.
         use_lr = EqualsCondition(child=learning_rate, parent=solver, value="sgd")
+        # ... since learning rate initialization will only be accounted for when using 'sgd' or 'adam'.
         use_lr_init = InCondition(child=learning_rate_init, parent=solver, values=["sgd", "adam"])
+        # ... since batch size will not be considered when optimizer is 'lbfgs'.
         use_batch_size = InCondition(child=batch_size, parent=solver, values=["sgd", "adam"])
 
+        # We can also add multiple conditions on hyperparameters at once:
         cs.add_conditions([use_lr, use_batch_size, use_lr_init])
 
         return cs
 
-    def train(self, config: Configuration, budget_type: str, budget: int, seed: int = 0) -> float:
+    def train(self, config: Configuration, seed: int = 0, budget: int = 25) -> float:
+        # For deactivated parameters (by virtue of the conditions),
+        # the configuration stores None-values.
+        # This is not accepted by the MLP, so we replace them with placeholder values.
         lr = config.get("learning_rate", "constant")
         lr_init = config.get("learning_rate_init", 0.001)
         batch_size = config.get("batch_size", 200)
-        
-        if budget_type == "epoch":
-            max_iter = budget
-            n_splits = 5
-            sampling_ratio = 1.0
-        elif budget_type == "cv_splits":
-            max_iter = 25
-            n_splits = budget
-            sampling_ratio = 1.0
-        elif budget_type == "sampling_ratio":
-            max_iter = 25
-            n_splits = 5
-            sampling_ratio = budget
-        else:
-            raise ValueError("Invalid budget_type")
-        
+
         with warnings.catch_warnings():
             warnings.filterwarnings("ignore")
 
@@ -78,26 +77,29 @@ class MLP:
                 activation=config["activation"],
                 learning_rate=lr,
                 learning_rate_init=lr_init,
-                max_iter=int(np.ceil(max_iter)),
+                max_iter=int(np.ceil(budget)),
                 random_state=seed,
             )
 
-            cv = StratifiedKFold(n_splits=int(np.ceil(n_splits)), random_state=seed, shuffle=True)
-            sampled_data = sample_data(dataset, float(np.ceil(sampling_ratio)))
-            score = cross_val_score(classifier, sample_data(dataset, float(np.ceil(sampling_ratio))).data, sample_data(dataset, float(np.ceil(sampling_ratio))).target, cv=cv, error_score="raise")
+            # Returns the 5-fold cross validation accuracy
+            cv = StratifiedKFold(n_splits=5, random_state=seed, shuffle=True)  # to make CV splits consistent
+            score = cross_val_score(classifier, dataset.data, dataset.target, cv=cv, error_score="raise")
 
         return 1 - np.mean(score)
 
-def plot_trajectory(facades):
+
+def plot_trajectory(facades: list[AbstractFacade], hps: list[str]) -> None:
+    """Plots the trajectory (incumbents) of the optimization process."""
     plt.figure()
     plt.title("Trajectory")
     plt.xlabel("Wallclock time [s]")
     plt.ylabel(facades[0].scenario.objectives)
     plt.ylim(0, 0.4)
 
-    for facade in facades:
+    for i, facade in enumerate(facades, start=0):
         X, Y = [], []
         for item in facade.intensifier.trajectory:
+            # Single-objective optimization
             assert len(item.config_ids) == 1
             assert len(item.costs) == 1
 
@@ -107,47 +109,36 @@ def plot_trajectory(facades):
             X.append(x)
             Y.append(y)
 
-        plt.plot(X, Y, label=facade.intensifier.__class__.__name__)
+        plt.plot(X, Y, label=hps[i])
         plt.scatter(X, Y, marker="x")
 
     plt.legend()
     plt.show()
 
-if __name__ == "__main__":
-    budget_types = ["epoch", "cv_splits", "sampling_ratio"]
-    budget_ranges = {
-        "epoch": (5, 20),
-        "cv_splits": (3, 10),
-        "sampling_ratio": (0.1, 1.0)
-    }
-    
-    best_budget_type = None
-    best_reduction = float("inf")
 
+if __name__ == "__main__":
     mlp = MLP()
 
-    default_config = mlp.configspace.get_default_configuration()
-    default_cost = mlp.train(default_config, budget_type="epoch", budget=25)
-
-
-    for budget_type in budget_types:
-        min_budget, max_budget = budget_ranges[budget_type]
-        
-        facades = []
-        intensifier_object = Hyperband
-
+    facades: list[AbstractFacade] = []
+    hps: list[str] = ["any_budget", "highest_observed_budget", "highest_budget"]
+    for incumbent_selection in hps: #SuccessiveHalving,
+        # Define our environment variables
         scenario = Scenario(
             mlp.configspace,
-            walltime_limit=60,
-            n_trials=500,
-            min_budget=min_budget,
-            max_budget=max_budget,
+            walltime_limit=10,  # After 60 seconds, we stop the hyperparameter optimization
+            n_trials=500,  # Evaluate max 500 different trials
+            min_budget=1,  # Train the MLP using a hyperparameter configuration for at least 5 epochs
+            max_budget=25,  # Train the MLP using a hyperparameter configuration for at most 25 epochs
             n_workers=8,
         )
-        
+
+        # We want to run five random configurations before starting the optimization.
         initial_design = MFFacade.get_initial_design(scenario, n_configs=5)
-        intensifier = intensifier_object(scenario, incumbent_selection="highest_budget")
-        
+
+        # Create our intensifier
+        intensifier = Hyperband(scenario, incumbent_selection="highest_budget")
+
+        # Create our SMAC object and pass the scenario and the train method
         smac = MFFacade(
             scenario,
             mlp.train,
@@ -155,16 +146,20 @@ if __name__ == "__main__":
             intensifier=intensifier,
             overwrite=True,
         )
-        
-        incumbent = smac.optimize()
-        incumbent_cost = smac.validate(incumbent)
-        facades.append(smac)
-        plot_trajectory(facades)
-        
-        reduction = default_cost - incumbent_cost
-        
-        if reduction < best_reduction:
-            best_reduction = reduction
-            best_budget_type = budget_type
 
-    print(f"Best performing budget type: {best_budget_type}")
+        # Let's optimize
+        incumbent = smac.optimize()
+
+        # Get cost of default configuration
+        #default_cost = smac.validate(mlp.configspace.get_default_configuration())
+        #print(f"Default cost ({intensifier.__class__.__name__}): {default_cost}")
+
+        # Let's calculate the cost of the incumbent
+        incumbent_cost = smac.validate(incumbent)
+        print(f"Incumbent cost ({intensifier.__class__.__name__}): {incumbent_cost}")
+
+        facades.append(smac)
+
+
+    # Let's plot it
+    plot_trajectory(facades, hps)
