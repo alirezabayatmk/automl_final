@@ -52,6 +52,9 @@ def configuration_space(
         cs_file: Optional[str | Path] = None
 ) -> ConfigurationSpace:
     """Build Configuration Space which defines all parameters and their ranges."""
+
+    print('running configuration_space function')
+
     if cs_file is None:
         # This serves only as an example of how you can manually define a Configuration Space
         # To illustrate different parameter types;
@@ -113,6 +116,8 @@ def configuration_space(
             cs.add_hyperparameter(Constant("datasetpath", str(datasetpath.absolute())))
         logging.debug(f"Configuration space:\n{cs}")
 
+
+    print('configuration_space function finished: ', cs)
     return cs
 
 
@@ -122,6 +127,9 @@ def get_optimizer_and_criterion(
     type[torch.optim.AdamW | torch.optim.Adam],
     type[torch.nn.MSELoss | torch.nn.CrossEntropyLoss],
 ]:
+    
+    print('running get_optimizer_and_criterion function')
+
     if cfg["optimizer"] == "AdamW":
         model_optimizer = torch.optim.AdamW
     else:
@@ -131,6 +139,8 @@ def get_optimizer_and_criterion(
         train_criterion = torch.nn.MSELoss
     else:
         train_criterion = torch.nn.CrossEntropyLoss
+
+    print('get_optimizer_and_criterion function finished: ', model_optimizer, train_criterion)
 
     return model_optimizer, train_criterion
 
@@ -159,19 +169,24 @@ def cnn_from_cfg(
     -------
     val_accuracy cross validation accuracy
     """
+
+    print('running cnn_from_cfg function')
+
     try:
         worker_id = get_worker().name
     except ValueError:
         worker_id = 0
 
     # If data already existing on disk, set to False
-    download = True
+    download = False
 
     lr = cfg["learning_rate_init"]
     dataset = cfg["dataset"]
     device = cfg["device"]
     batch_size = cfg["batch_size"]
     ds_path = cfg["datasetpath"]
+
+    print('cnn_from_cfg function finished: ', lr, dataset, device, batch_size, ds_path)
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
     img_size = max(8, int(np.floor(budget)))  # example fidelity to use
@@ -199,6 +214,7 @@ def cnn_from_cfg(
     score = []
     cv_splits = cv.split(train_val, train_val.targets)
     for cv_index, (train_idx, valid_idx) in enumerate(cv_splits, start=1):
+        print('now in cross validation loop')
         logging.info(f"Worker:{worker_id} ------------ CV {cv_index} -----------")
         train_data = Subset(train_val, list(train_idx))
         val_data = Subset(train_val, list(valid_idx))
@@ -227,7 +243,8 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(10):  # 20 epochs
+        for epoch in range(20):  # 20 epochs
+            print('epoch: ', epoch)
             logging.info(f"Worker:{worker_id} " + "#" * 50)
             logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
             train_score, train_loss = model.train_fn(
@@ -237,12 +254,16 @@ def cnn_from_cfg(
                 device=model_device
             )
             logging.info(f"Worker:{worker_id} => Train accuracy {train_score:.3f} | loss {train_loss}")
+            print('train_score: ', train_score)
+            print('train_loss: ', train_loss)
 
         val_score = model.eval_fn(val_loader, device)
         logging.info(f"Worker:{worker_id} => Val accuracy {val_score:.3f}")
+        print('val_score: ', val_score)
         score.append(val_score)
 
     val_error = 1 - np.mean(score)  # because minimize
+    print('val_error: ', val_error)
 
     results = val_error
     return results
@@ -253,6 +274,8 @@ if __name__ == "__main__":
     This is just an example of how to implement BOHB as an optimizer!
     Here we do not consider any of the forbidden clauses.
     """
+
+    print('running main function, parsing arguments')
 
     parser = argparse.ArgumentParser(description="MF example using BOHB.")
     parser.add_argument(
@@ -270,7 +293,7 @@ if __name__ == "__main__":
     # 21600 default
     parser.add_argument(
         "--runtime",
-        default=3600,
+        default=500,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -278,7 +301,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=8,
+        default=10,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
@@ -291,11 +314,11 @@ if __name__ == "__main__":
     )
     # default 4
     parser.add_argument(
-        "--workers", type=int, default=8, help="num of workers to use with BOHB"
+        "--workers", type=int, default=16, help="num of workers to use with BOHB"
     )
     #default 500
     parser.add_argument(
-        "--n_trials", type=int, default=200, help="Number of iterations to run SMAC for"
+        "--n_trials", type=int, default=500, help="Number of iterations to run SMAC for"
     )
     parser.add_argument(
         "--cv_count",
@@ -335,6 +358,8 @@ if __name__ == "__main__":
         cs_file=args.configspace
     )
 
+    print('running main function, config space: ', configspace)
+
     # Setting up SMAC to run BOHB
     scenario = Scenario(
         name="ExampleMFRunWithBOHB",
@@ -348,6 +373,8 @@ if __name__ == "__main__":
         n_workers=args.workers,
         walltime_limit=args.runtime
     )
+
+    print('running main function, scenario created: ', scenario)
 
     # You can mess with SMACs own hyperparameters here (checkout the documentation at https://automl.github.io/SMAC3)
     smac = SMAC4MF(
@@ -363,5 +390,9 @@ if __name__ == "__main__":
         logging_level=args.log_level,  # https://automl.github.io/SMAC3/main/advanced_usage/8_logging.html
     )
 
+    print('running main function, smac created: ', smac)
+
     # Start optimization
     incumbent = smac.optimize()
+
+    print('running main function, incumbent finished: ', incumbent)

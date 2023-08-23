@@ -1,0 +1,179 @@
+{
+  "incumbent_ids": [
+    42
+  ],
+  "rejected_config_ids": [
+    15,
+    11,
+    49
+  ],
+  "incumbents_changed": 4,
+  "trajectory": [
+    {
+      "config_ids": [
+        15
+      ],
+      "costs": [
+        Infinity
+      ],
+      "trial": 17,
+      "walltime": 2.1256566047668457
+    },
+    {
+      "config_ids": [
+        11
+      ],
+      "costs": [
+        0.89983286908078
+      ],
+      "trial": 39,
+      "walltime": 6.062788963317871
+    },
+    {
+      "config_ids": [
+        49
+      ],
+      "costs": [
+        0.024484679665738085
+      ],
+      "trial": 58,
+      "walltime": 14.20215916633606
+    },
+    {
+      "config_ids": [
+        42
+      ],
+      "costs": [
+        0.021706901887960428
+      ],
+      "trial": 127,
+      "walltime": 42.507277488708496
+    }
+  ],
+  "state": {
+    "tracker": {
+      "0,0": [
+        [
+          0,
+          [
+            {
+              "activation": "tanh",
+              "n_layer": 5,
+              "n_neurons": 200,
+              "solver": "sgd",
+              "batch_size": 39,
+              "learning_rate": "adaptive",
+              "learning_rate_init": 0.002097791350460102
+            },
+            {
+              "activation": "tanh",
+              "n_layer": 4,
+              "n_neurons": 139,
+              "solver": "lbfgs"
+            },
+            {
+              "activation": "relu",
+              "n_layer": 4,
+              "n_neurons": 70,
+              "solver": "sgd",
+              "batch_size": 218,
+              "learning_rate": "invscaling",
+              "learning_rate_init": 0.44238816645109597
+            },
+            {
+              "activation": "logistic",
+              "n_layer": 1,
+              "n_neurons": 31,
+              "solver": "lbfgs"
+            },
+            {
+              "activation": "tanh",
+              "n_layer": 2,
+              "n_neurons": 11,
+              "solver": "sgd",
+              "batch_size": 225,
+              "learning_rate": "adaptive",
+              "learning_rate_init": 0.04708395307158668
+            },
+            {
+              "activation": "tanh",
+              "n_layer": 5,
+              "n_neurons": 176,
+              "solver": "sgd",
+              "batch_size": 66,
+              "learning_rate": "invscaling",
+              "learning_rate_init": 0.017450278190972973
+            },
+            {
+              "activation": "logistic",
+              "n_layer": 2,
+              "n_neurons": 106,
+              "solver": "adam",
+              "batch_size": 135,
+              "learning_rate_init": 0.0012745257404479973
+            },
+            {
+              "activation": "logistic",
+              "n_layer": 5,
+              "n_neurons": 34,
+              "solver": "lbfgs"
+            },
+            {
+              "activation": "logistic",
+              "n_layer": 1,
+              "n_neurons": 11,
+              "solver": "sgd",
+              "batch_size": 296,
+              "learning_rate": "invscaling",
+              "learning_rate_init": 0.18390901106575688
+            }
+          ]
+        ]
+      ],
+      "1,0": [
+        [
+          0,
+          [
+            {
+              "activation": "logistic",
+              "n_layer": 1,
+              "n_neurons": 206,
+              "solver": "lbfgs"
+            },
+            {
+              "activation": "relu",
+              "n_layer": 3,
+              "n_neurons": 109,
+              "solver": "sgd",
+              "batch_size": 70,
+              "learning_rate": "invscaling",
+              "learning_rate_init": 0.462765867930737
+            },
+            {
+              "activation": "tanh",
+              "n_layer": 1,
+              "n_neurons": 241,
+              "solver": "sgd",
+              "batch_size": 138,
+              "learning_rate": "invscaling",
+              "learning_rate_init": 0.6635348431628427
+            },
+            {
+              "activation": "tanh",
+              "n_layer": 4,
+              "n_neurons": 250,
+              "solver": "lbfgs"
+            },
+            {
+              "activation": "tanh",
+              "n_layer": 5,
+              "n_neurons": 242,
+              "solver": "lbfgs"
+            }
+          ]
+        ]
+      ]
+    },
+    "next_bracket": 2
+  }
+}

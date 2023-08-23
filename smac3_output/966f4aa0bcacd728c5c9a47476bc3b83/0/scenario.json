@@ -1,126 +1,37 @@
 {
-    "name": "ExampleMFRunWithBOHB",
+    "name": "966f4aa0bcacd728c5c9a47476bc3b83",
     "deterministic": true,
     "objectives": "cost",
     "crash_cost": Infinity,
     "termination_cost_threshold": Infinity,
-    "walltime_limit": 500,
+    "walltime_limit": Infinity,
     "cputime_limit": Infinity,
     "trial_walltime_limit": null,
     "trial_memory_limit": null,
-    "n_trials": 500,
+    "n_trials": 200,
     "use_default_config": false,
     "instances": null,
     "instance_features": null,
-    "min_budget": 1,
-    "max_budget": 10,
+    "min_budget": null,
+    "max_budget": null,
     "seed": 0,
-    "n_workers": 16,
+    "n_workers": 1,
     "_meta": {
         "facade": {
-            "name": "MultiFidelityFacade"
+            "name": "HyperparameterOptimizationFacade"
         },
         "runner": {
-            "name": "DaskParallelRunner"
+            "name": "TargetFunctionRunner",
+            "code": "b't\\x00\\xa0\\x00\\xa1\\x00}\\x02t\\x01|\\x00d\\x01\\x19\\x00|\\x01d\\x02\\x8d\\x02}\\x03t\\x02|\\x03t\\x03j\\x04t\\x03j\\x05d\\x03d\\x04\\x8d\\x04}\\x04t\\x00\\xa0\\x00\\xa1\\x00|\\x02\\x18\\x00}\\x05d\\x05t\\x06\\xa0\\x07|\\x04\\xa1\\x01\\x18\\x00}\\x06t\\x08\\xa0\\t|\\x06\\xa1\\x01\\x01\\x00t\\n\\xa0\\t|\\x05\\xa1\\x01\\x01\\x00|\\x06S\\x00'"
         },
         "model": {
             "name": "RandomForest",
             "types": [
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0,
-                0,
-                0,
-                0,
-                0,
-                2,
-                0,
-                0,
-                0,
                 0
             ],
             "bounds": [
                 [
                     0,
-                    1.0
-                ],
-                [
-                    0,
-                    NaN
-                ],
-                [
-                    0,
-                    NaN
-                ],
-                [
-                    0,
-                    NaN
-                ],
-                [
-                    0,
-                    NaN
-                ],
-                [
-                    0,
-                    NaN
-                ],
-                [
-                    0,
-                    NaN
-                ],
-                [
-                    2,
-                    NaN
-                ],
-                [
-                    0,
-                    NaN
-                ],
-                [
-                    0,
-                    1.0
-                ],
-                [
-                    0,
-                    1.0
-                ],
-                [
-                    0,
-                    1.0
-                ],
-                [
-                    0,
-                    1.0
-                ],
-                [
-                    0,
-                    1.0
-                ],
-                [
-                    2,
-                    NaN
-                ],
-                [
-                    -1.0,
-                    1.0
-                ],
-                [
-                    -1.0,
-                    1.0
-                ],
-                [
-                    -1.0,
-                    1.0
-                ],
-                [
-                    -1.0,
                     1.0
                 ]
             ],
@@ -175,16 +86,13 @@
             "log": true
         },
         "intensifier": {
-            "name": "Hyperband",
+            "name": "Intensifier",
             "max_incumbents": 10,
-            "seed": 0,
-            "eta": 2,
-            "instance_seed_order": "shuffle_once",
-            "incumbent_selection": "highest_budget"
+            "seed": 0
         },
         "initial_design": {
-            "name": "RandomInitialDesign",
-            "n_configs": 2,
+            "name": "SobolInitialDesign",
+            "n_configs": 10,
             "n_configs_per_hyperparameter": 10,
             "additional_configs": [],
             "seed": 0
@@ -214,5 +122,5 @@
         },
         "version": "2.0.2"
     },
-    "output_directory": "tmp/ExampleMFRunWithBOHB/0"
+    "output_directory": "smac3_output/966f4aa0bcacd728c5c9a47476bc3b83/0"
 }

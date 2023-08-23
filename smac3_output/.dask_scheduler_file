@@ -1,75 +1,24 @@
 {
   "type": "Scheduler",
-  "id": "Scheduler-fc4fdc95-93dd-45e4-a266-4f9fe9e9e9d2",
-  "address": "tcp://127.0.0.1:40293",
+  "id": "Scheduler-2950ba56-ac26-485b-91fe-ac5990ddfb59",
+  "address": "tcp://127.0.0.1:46241",
   "services": {
     "dashboard": 8787
   },
-  "started": 1692717949.2452445,
+  "started": 1692785670.83266,
   "workers": {
-    "tcp://127.0.0.1:33251": {
+    "tcp://127.0.0.1:33065": {
       "type": "Worker",
       "id": 13,
       "host": "127.0.0.1",
       "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-zlx5q04h",
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-raikkzus",
       "name": 13,
       "nthreads": 1,
       "memory_limit": 1041554944,
-      "last_seen": 1692717961.4446871,
+      "last_seen": 1692785677.135344,
       "services": {
-        "dashboard": 37327
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {},
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.02,
-        "cpu": 0.0,
-        "memory": 429711360,
-        "time": 1692717961.108423,
-        "host_net_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "host_disk_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "num_fds": 18
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:40873"
-    },
-    "tcp://127.0.0.1:34215": {
-      "type": "Worker",
-      "id": 0,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-3yt0_q90",
-      "name": 0,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717961.622041,
-      "services": {
-        "dashboard": 45129
+        "dashboard": 38027
       },
       "metrics": {
         "task_counts": {},
@@ -79,8 +28,8 @@
           "types": {}
         },
         "digests_total_since_heartbeat": {
-          "latency": 0.39992570877075195,
-          "tick-duration": 0.9821112155914307
+          "tick-duration": 0.5009896755218506,
+          "latency": 0.003152132034301758
         },
         "managed_bytes": 0,
         "spilled_bytes": {
@@ -95,461 +44,35 @@
           "outgoing_count": 0,
           "outgoing_count_total": 0
         },
-        "event_loop_interval": 0.02,
-        "cpu": 35.6,
-        "memory": 455254016,
-        "time": 1692717961.1176484,
-        "host_net_io": {
-          "read_bps": 30748.122772948973,
-          "write_bps": 30616.035102245907
-        },
-        "host_disk_io": {
-          "read_bps": 8587.79522539286,
-          "write_bps": 403626.3755934644
-        },
-        "num_fds": 20
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:43987"
-    },
-    "tcp://127.0.0.1:34803": {
-      "type": "Worker",
-      "id": 9,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-438_rlyf",
-      "name": 9,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717961.5748985,
-      "services": {
-        "dashboard": 39257
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {
-          "latency": 0.5179576873779297,
-          "tick-duration": 0.9809348583221436
-        },
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.02,
-        "cpu": 30.5,
-        "memory": 455254016,
-        "time": 1692717961.0641184,
-        "host_net_io": {
-          "read_bps": 28742.638037994664,
-          "write_bps": 28622.607135409904
-        },
-        "host_disk_io": {
-          "read_bps": 7803.91392043127,
-          "write_bps": 366783.9542602697
-        },
-        "num_fds": 20
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:39629"
-    },
-    "tcp://127.0.0.1:35033": {
-      "type": "Worker",
-      "id": 15,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-b9vu45iv",
-      "name": 15,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717960.7758405,
-      "services": {
-        "dashboard": 36783
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {},
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.02,
-        "cpu": 0.0,
-        "memory": 429187072,
-        "time": 1692717960.3579116,
-        "host_net_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "host_disk_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "num_fds": 18
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:34247"
-    },
-    "tcp://127.0.0.1:35629": {
-      "type": "Worker",
-      "id": 8,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-mz2dbjag",
-      "name": 8,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717961.185523,
-      "services": {
-        "dashboard": 45207
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {
-          "latency": 0.5430757999420166,
-          "tick-duration": 0.9820914268493652
-        },
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.02,
-        "cpu": 31.7,
-        "memory": 455180288,
-        "time": 1692717960.6803472,
-        "host_net_io": {
-          "read_bps": 22743.19124663574,
-          "write_bps": 22664.753569483604
-        },
-        "host_disk_io": {
-          "read_bps": 3824.7705430374444,
-          "write_bps": 0.0
-        },
-        "num_fds": 20
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:42695"
-    },
-    "tcp://127.0.0.1:35733": {
-      "type": "Worker",
-      "id": 5,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-vxn5c1ij",
-      "name": 5,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717960.8111475,
-      "services": {
-        "dashboard": 36413
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {
-          "tick-duration": 0.49996280670166016,
-          "latency": 0.008794069290161133
-        },
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.050350732803344726,
+        "event_loop_interval": 0.037858309745788576,
         "cpu": 4.0,
-        "memory": 457023488,
-        "time": 1692717960.3081949,
+        "memory": 199282688,
+        "time": 1692785676.6365285,
         "host_net_io": {
-          "read_bps": 19462.25742699637,
-          "write_bps": 19294.030464260446
+          "read_bps": 34166.57012087731,
+          "write_bps": 34082.6375043319
         },
         "host_disk_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
+          "read_bps": 65483.428070474794,
+          "write_bps": 278304.5692995179
         },
         "num_fds": 21
       },
       "status": "running",
-      "nanny": "tcp://127.0.0.1:43607"
+      "nanny": "tcp://127.0.0.1:41739"
     },
-    "tcp://127.0.0.1:35895": {
-      "type": "Worker",
-      "id": 14,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-qeecwj2m",
-      "name": 14,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717961.5022357,
-      "services": {
-        "dashboard": 34643
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {
-          "latency": 0.6461713314056396,
-          "tick-duration": 0.9810078144073486
-        },
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.02,
-        "cpu": 29.0,
-        "memory": 455184384,
-        "time": 1692717960.99484,
-        "host_net_io": {
-          "read_bps": 24912.65330920356,
-          "write_bps": 24808.232487642083
-        },
-        "host_disk_io": {
-          "read_bps": 3394.5054374271576,
-          "write_bps": 0.0
-        },
-        "num_fds": 20
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:36563"
-    },
-    "tcp://127.0.0.1:37993": {
-      "type": "Worker",
-      "id": 6,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-26exxvz8",
-      "name": 6,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717961.6176481,
-      "services": {
-        "dashboard": 45671
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {},
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.02,
-        "cpu": 0.0,
-        "memory": 429486080,
-        "time": 1692717961.288776,
-        "host_net_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "host_disk_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "num_fds": 18
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:35597"
-    },
-    "tcp://127.0.0.1:39319": {
-      "type": "Worker",
-      "id": 10,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-isdckvn4",
-      "name": 10,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717960.7554154,
-      "services": {
-        "dashboard": 36571
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {
-          "tick-duration": 0.498154878616333,
-          "latency": 0.01000523567199707
-        },
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.05603382587432861,
-        "cpu": 2.0,
-        "memory": 457199616,
-        "time": 1692717960.2517703,
-        "host_net_io": {
-          "read_bps": 14197.11081267715,
-          "write_bps": 14113.187004917483
-        },
-        "host_disk_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "num_fds": 20
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:39347"
-    },
-    "tcp://127.0.0.1:40615": {
-      "type": "Worker",
-      "id": 3,
-      "host": "127.0.0.1",
-      "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-c0yvnyvp",
-      "name": 3,
-      "nthreads": 1,
-      "memory_limit": 1041554944,
-      "last_seen": 1692717961.0227244,
-      "services": {
-        "dashboard": 35549
-      },
-      "metrics": {
-        "task_counts": {},
-        "bandwidth": {
-          "total": 100000000,
-          "workers": {},
-          "types": {}
-        },
-        "digests_total_since_heartbeat": {
-          "tick-duration": 0.5002350807189941,
-          "latency": 0.008124351501464844
-        },
-        "managed_bytes": 0,
-        "spilled_bytes": {
-          "memory": 0,
-          "disk": 0
-        },
-        "transfer": {
-          "incoming_bytes": 0,
-          "incoming_count": 0,
-          "incoming_count_total": 0,
-          "outgoing_bytes": 0,
-          "outgoing_count": 0,
-          "outgoing_count_total": 0
-        },
-        "event_loop_interval": 0.019999680519104005,
-        "cpu": 4.0,
-        "memory": 457437184,
-        "time": 1692717960.5225883,
-        "host_net_io": {
-          "read_bps": 25068.56809393471,
-          "write_bps": 24899.945438594343
-        },
-        "host_disk_io": {
-          "read_bps": 0.0,
-          "write_bps": 0.0
-        },
-        "num_fds": 21
-      },
-      "status": "running",
-      "nanny": "tcp://127.0.0.1:42475"
-    },
-    "tcp://127.0.0.1:42739": {
+    "tcp://127.0.0.1:33433": {
       "type": "Worker",
       "id": 4,
       "host": "127.0.0.1",
       "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-4648puth",
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-oyowvpta",
       "name": 4,
       "nthreads": 1,
       "memory_limit": 1041554944,
-      "last_seen": 1692717960.9969285,
+      "last_seen": 1692785676.9803605,
       "services": {
-        "dashboard": 34871
+        "dashboard": 43087
       },
       "metrics": {
         "task_counts": {},
@@ -559,8 +82,8 @@
           "types": {}
         },
         "digests_total_since_heartbeat": {
-          "tick-duration": 0.5009472370147705,
-          "latency": 0.020363569259643555
+          "latency": 0.9985473155975342,
+          "tick-duration": 0.9810347557067871
         },
         "managed_bytes": 0,
         "spilled_bytes": {
@@ -575,35 +98,188 @@
           "outgoing_count": 0,
           "outgoing_count_total": 0
         },
-        "event_loop_interval": 0.04317878246307373,
-        "cpu": 4.0,
-        "memory": 456597504,
-        "time": 1692717960.4959989,
+        "event_loop_interval": 0.02,
+        "cpu": 27.6,
+        "memory": 200790016,
+        "time": 1692785676.4749498,
         "host_net_io": {
-          "read_bps": 21395.026197316496,
-          "write_bps": 21226.719192205557
+          "read_bps": 13523.189514785387,
+          "write_bps": 13523.189514785387
+        },
+        "host_disk_io": {
+          "read_bps": 0.0,
+          "write_bps": 194779.16910708562
+        },
+        "num_fds": 20
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:45657"
+    },
+    "tcp://127.0.0.1:34207": {
+      "type": "Worker",
+      "id": 15,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-vdw953qs",
+      "name": 15,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785677.082667,
+      "services": {
+        "dashboard": 45483
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {},
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 0.0,
+        "memory": 170815488,
+        "time": 1692785676.7715127,
+        "host_net_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
         },
         "host_disk_io": {
           "read_bps": 0.0,
           "write_bps": 0.0
         },
-        "num_fds": 20
+        "num_fds": 18
       },
       "status": "running",
-      "nanny": "tcp://127.0.0.1:36105"
+      "nanny": "tcp://127.0.0.1:41045"
     },
-    "tcp://127.0.0.1:43097": {
+    "tcp://127.0.0.1:35607": {
+      "type": "Worker",
+      "id": 10,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-xidcaqcl",
+      "name": 10,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785676.5210114,
+      "services": {
+        "dashboard": 40525
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {},
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 0.0,
+        "memory": 171118592,
+        "time": 1692785675.682318,
+        "host_net_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
+        },
+        "host_disk_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
+        },
+        "num_fds": 18
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:33557"
+    },
+    "tcp://127.0.0.1:36585": {
+      "type": "Worker",
+      "id": 6,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-mjykx5j0",
+      "name": 6,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785677.2220252,
+      "services": {
+        "dashboard": 33181
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {},
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 0.0,
+        "memory": 171196416,
+        "time": 1692785676.9633815,
+        "host_net_io": {
+          "read_bps": 387569.6827113294,
+          "write_bps": 387569.6827113294
+        },
+        "host_disk_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
+        },
+        "num_fds": 18
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:43435"
+    },
+    "tcp://127.0.0.1:36849": {
       "type": "Worker",
       "id": 2,
       "host": "127.0.0.1",
       "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-hekiqjn3",
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-qmef31ad",
       "name": 2,
       "nthreads": 1,
       "memory_limit": 1041554944,
-      "last_seen": 1692717961.0090225,
+      "last_seen": 1692785676.5933728,
       "services": {
-        "dashboard": 41097
+        "dashboard": 39921
       },
       "metrics": {
         "task_counts": {},
@@ -612,10 +288,7 @@
           "workers": {},
           "types": {}
         },
-        "digests_total_since_heartbeat": {
-          "tick-duration": 0.5015354156494141,
-          "latency": 0.00903773307800293
-        },
+        "digests_total_since_heartbeat": {},
         "managed_bytes": 0,
         "spilled_bytes": {
           "memory": 0,
@@ -629,35 +302,35 @@
           "outgoing_count": 0,
           "outgoing_count_total": 0
         },
-        "event_loop_interval": 0.02002446174621582,
-        "cpu": 6.0,
-        "memory": 459493376,
-        "time": 1692717960.5069947,
+        "event_loop_interval": 0.02,
+        "cpu": 0.0,
+        "memory": 171126784,
+        "time": 1692785676.0131974,
         "host_net_io": {
-          "read_bps": 22717.147099572026,
-          "write_bps": 22549.197763507596
+          "read_bps": 0.0,
+          "write_bps": 0.0
         },
         "host_disk_io": {
           "read_bps": 0.0,
           "write_bps": 0.0
         },
-        "num_fds": 21
+        "num_fds": 18
       },
       "status": "running",
-      "nanny": "tcp://127.0.0.1:39607"
+      "nanny": "tcp://127.0.0.1:38745"
     },
-    "tcp://127.0.0.1:43193": {
+    "tcp://127.0.0.1:37103": {
       "type": "Worker",
       "id": 11,
       "host": "127.0.0.1",
       "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-3tifwktd",
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-fxtxf9mk",
       "name": 11,
       "nthreads": 1,
       "memory_limit": 1041554944,
-      "last_seen": 1692717960.6785443,
+      "last_seen": 1692785676.3722012,
       "services": {
-        "dashboard": 45845
+        "dashboard": 32991
       },
       "metrics": {
         "task_counts": {},
@@ -682,11 +355,11 @@
         },
         "event_loop_interval": 0.02,
         "cpu": 0.0,
-        "memory": 429322240,
-        "time": 1692717960.2600698,
+        "memory": 170975232,
+        "time": 1692785675.791997,
         "host_net_io": {
-          "read_bps": 280578.3345562249,
-          "write_bps": 280578.3345562249
+          "read_bps": 0.0,
+          "write_bps": 0.0
         },
         "host_disk_io": {
           "read_bps": 0.0,
@@ -695,20 +368,20 @@
         "num_fds": 18
       },
       "status": "running",
-      "nanny": "tcp://127.0.0.1:43145"
+      "nanny": "tcp://127.0.0.1:37419"
     },
-    "tcp://127.0.0.1:44067": {
+    "tcp://127.0.0.1:40781": {
       "type": "Worker",
-      "id": 7,
+      "id": 9,
       "host": "127.0.0.1",
       "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-a_a9eel8",
-      "name": 7,
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-vo43v0pr",
+      "name": 9,
       "nthreads": 1,
       "memory_limit": 1041554944,
-      "last_seen": 1692717961.55991,
+      "last_seen": 1692785676.893673,
       "services": {
-        "dashboard": 41057
+        "dashboard": 36111
       },
       "metrics": {
         "task_counts": {},
@@ -733,8 +406,8 @@
         },
         "event_loop_interval": 0.02,
         "cpu": 0.0,
-        "memory": 429436928,
-        "time": 1692717961.2400036,
+        "memory": 171106304,
+        "time": 1692785676.5464869,
         "host_net_io": {
           "read_bps": 0.0,
           "write_bps": 0.0
@@ -746,20 +419,20 @@
         "num_fds": 18
       },
       "status": "running",
-      "nanny": "tcp://127.0.0.1:45279"
+      "nanny": "tcp://127.0.0.1:44681"
     },
-    "tcp://127.0.0.1:44987": {
+    "tcp://127.0.0.1:41289": {
       "type": "Worker",
-      "id": 12,
+      "id": 8,
       "host": "127.0.0.1",
       "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-o4i1gcu1",
-      "name": 12,
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-s5f_1npa",
+      "name": 8,
       "nthreads": 1,
       "memory_limit": 1041554944,
-      "last_seen": 1692717960.9247074,
+      "last_seen": 1692785676.9609103,
       "services": {
-        "dashboard": 44909
+        "dashboard": 37725
       },
       "metrics": {
         "task_counts": {},
@@ -784,8 +457,8 @@
         },
         "event_loop_interval": 0.02,
         "cpu": 0.0,
-        "memory": 429289472,
-        "time": 1692717960.4740932,
+        "memory": 171016192,
+        "time": 1692785676.5603423,
         "host_net_io": {
           "read_bps": 0.0,
           "write_bps": 0.0
@@ -797,20 +470,71 @@
         "num_fds": 18
       },
       "status": "running",
-      "nanny": "tcp://127.0.0.1:42281"
+      "nanny": "tcp://127.0.0.1:36573"
     },
-    "tcp://127.0.0.1:46117": {
+    "tcp://127.0.0.1:42051": {
       "type": "Worker",
-      "id": 1,
+      "id": 3,
       "host": "127.0.0.1",
       "resources": {},
-      "local_directory": "/home/shady/Projects/automl_final/tmp/ExampleMFRunWithBOHB/0/dask-scratch-space/worker-byoofbpy",
-      "name": 1,
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-srq4ockm",
+      "name": 3,
       "nthreads": 1,
       "memory_limit": 1041554944,
-      "last_seen": 1692717961.0758507,
+      "last_seen": 1692785677.1658244,
       "services": {
-        "dashboard": 36037
+        "dashboard": 43045
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {},
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 0.0,
+        "memory": 171261952,
+        "time": 1692785676.8720074,
+        "host_net_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
+        },
+        "host_disk_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
+        },
+        "num_fds": 18
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:40677"
+    },
+    "tcp://127.0.0.1:42439": {
+      "type": "Worker",
+      "id": 5,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-3h4eoodk",
+      "name": 5,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785677.14965,
+      "services": {
+        "dashboard": 40273
       },
       "metrics": {
         "task_counts": {},
@@ -820,8 +544,8 @@
           "types": {}
         },
         "digests_total_since_heartbeat": {
-          "tick-duration": 0.4990711212158203,
-          "latency": 0.010746955871582031
+          "tick-duration": 0.4967520236968994,
+          "latency": 0.00995492935180664
         },
         "managed_bytes": 0,
         "spilled_bytes": {
@@ -836,22 +560,286 @@
           "outgoing_count": 0,
           "outgoing_count_total": 0
         },
-        "event_loop_interval": 0.03088146686553955,
+        "event_loop_interval": 0.038113183975219726,
         "cpu": 4.0,
-        "memory": 454758400,
-        "time": 1692717960.571337,
+        "memory": 198975488,
+        "time": 1692785676.649201,
         "host_net_io": {
-          "read_bps": 27736.70195814801,
-          "write_bps": 27568.927567387986
+          "read_bps": 32449.086233804126,
+          "write_bps": 32365.078243801057
+        },
+        "host_disk_io": {
+          "read_bps": 65542.23372429844,
+          "write_bps": 278554.4933282684
+        },
+        "num_fds": 20
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:37411"
+    },
+    "tcp://127.0.0.1:42453": {
+      "type": "Worker",
+      "id": 14,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-4v0fe0ze",
+      "name": 14,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785677.2609365,
+      "services": {
+        "dashboard": 33049
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {
+          "latency": 1.0006704330444336,
+          "tick-duration": 0.9821138381958008
+        },
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 27.0,
+        "memory": 200097792,
+        "time": 1692785676.7580981,
+        "host_net_io": {
+          "read_bps": 18074.369718515652,
+          "write_bps": 18047.331553243617
+        },
+        "host_disk_io": {
+          "read_bps": 21094.91903890586,
+          "write_bps": 89653.4059153499
+        },
+        "num_fds": 20
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:33105"
+    },
+    "tcp://127.0.0.1:43577": {
+      "type": "Worker",
+      "id": 0,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-1_u_isxl",
+      "name": 0,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785677.2403495,
+      "services": {
+        "dashboard": 45063
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {
+          "latency": 0.481975793838501,
+          "tick-duration": 0.9820845127105713
+        },
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 41.3,
+        "memory": 199057408,
+        "time": 1692785676.7368224,
+        "host_net_io": {
+          "read_bps": 24381.90566398896,
+          "write_bps": 24341.52394397289
+        },
+        "host_disk_io": {
+          "read_bps": 31505.433368728667,
+          "write_bps": 133898.09181709684
+        },
+        "num_fds": 20
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:46717"
+    },
+    "tcp://127.0.0.1:44123": {
+      "type": "Worker",
+      "id": 1,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-l5mad2tb",
+      "name": 1,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785676.616049,
+      "services": {
+        "dashboard": 38947
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {},
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 0.0,
+        "memory": 171057152,
+        "time": 1692785675.8552399,
+        "host_net_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
         },
         "host_disk_io": {
           "read_bps": 0.0,
           "write_bps": 0.0
         },
-        "num_fds": 20
+        "num_fds": 18
       },
       "status": "running",
-      "nanny": "tcp://127.0.0.1:42649"
+      "nanny": "tcp://127.0.0.1:35265"
+    },
+    "tcp://127.0.0.1:44339": {
+      "type": "Worker",
+      "id": 7,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-a7wumaux",
+      "name": 7,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785677.1304684,
+      "services": {
+        "dashboard": 43011
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {
+          "tick-duration": 0.5000476837158203,
+          "latency": 0.0041522979736328125
+        },
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.043065176010131836,
+        "cpu": 4.0,
+        "memory": 199053312,
+        "time": 1692785676.6301775,
+        "host_net_io": {
+          "read_bps": 35169.198375856475,
+          "write_bps": 35085.31477475556
+        },
+        "host_disk_io": {
+          "read_bps": 65445.18668749304,
+          "write_bps": 278142.0434218454
+        },
+        "num_fds": 21
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:43877"
+    },
+    "tcp://127.0.0.1:46457": {
+      "type": "Worker",
+      "id": 12,
+      "host": "127.0.0.1",
+      "resources": {},
+      "local_directory": "/home/shady/Projects/automl_final/smac3_output/dask-scratch-space/worker-vbn8uwu2",
+      "name": 12,
+      "nthreads": 1,
+      "memory_limit": 1041554944,
+      "last_seen": 1692785677.047959,
+      "services": {
+        "dashboard": 38367
+      },
+      "metrics": {
+        "task_counts": {},
+        "bandwidth": {
+          "total": 100000000,
+          "workers": {},
+          "types": {}
+        },
+        "digests_total_since_heartbeat": {},
+        "managed_bytes": 0,
+        "spilled_bytes": {
+          "memory": 0,
+          "disk": 0
+        },
+        "transfer": {
+          "incoming_bytes": 0,
+          "incoming_count": 0,
+          "incoming_count_total": 0,
+          "outgoing_bytes": 0,
+          "outgoing_count": 0,
+          "outgoing_count_total": 0
+        },
+        "event_loop_interval": 0.02,
+        "cpu": 0.0,
+        "memory": 171085824,
+        "time": 1692785676.6247325,
+        "host_net_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
+        },
+        "host_disk_io": {
+          "read_bps": 0.0,
+          "write_bps": 0.0
+        },
+        "num_fds": 18
+      },
+      "status": "running",
+      "nanny": "tcp://127.0.0.1:37653"
     }
   }
 }
