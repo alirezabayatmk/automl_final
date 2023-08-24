@@ -192,18 +192,18 @@ if __name__ == "__main__":
     intensifier_object = Hyperband
 
     budget_types = ["epoch", "cv_splits", "sampling_ratio"]
-    mins_and_maxs = [(5, 25), (1, 10), (10, 100)]
+    mins_and_maxs = [(5, 25), (1, 10), (20, 100)]
 
     for budget_type, (min_budget, max_budget) in zip(budget_types, mins_and_maxs):
         print(f"Budget type: {budget_type}")
     
         scenario = Scenario(
             mlp.configspace,
-            walltime_limit=100,  
+            walltime_limit=360,  
             n_trials=500,  
             min_budget= min_budget,  
             max_budget= max_budget, 
-            n_workers=3,
+            n_workers=16,
             name="MLPRunBudget({})".format(budget_type)
         )
 

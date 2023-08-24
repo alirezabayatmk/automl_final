@@ -38,6 +38,8 @@ from cnn import Model
 
 from datasets import load_deep_woods, load_fashion_mnist
 
+import optuna
+
 logger = logging.getLogger(__name__)
 
 CV_SPLIT_SEED = 42
@@ -74,7 +76,7 @@ def configuration_space(
                 "batch_size": Integer("batch_size", (1, 1000), default=200, log=True),
                 "learning_rate_init": Float(
                     "learning_rate_init",
-                    (1e-5, 1.0),
+                    (1e-5, 1e-1),
                     default=1e-3,
                     log=True,
                 ),
@@ -269,6 +271,21 @@ def cnn_from_cfg(
     return results
 
 
+def optimize_hyperparameters(trial):
+    # Optimize parameters of the random forest model
+    n_trees = trial.suggest_int("n_trees", 10, 25)
+    ratio_features = trial.suggest_float("ratio_features", 0.7, 1.0)
+    min_samples_split = trial.suggest_int("min_samples_split", 2, 10)
+    min_samples_leaf = trial.suggest_int("min_samples_leaf", 1, 10)
+
+    return {
+        "n_trees": n_trees,
+        "ratio_features": ratio_features,
+        "min_samples_split": min_samples_split,
+        "min_samples_leaf": min_samples_leaf,
+    }
+
+
 if __name__ == "__main__":
     """
     This is just an example of how to implement BOHB as an optimizer!
@@ -358,11 +375,57 @@ if __name__ == "__main__":
         cs_file=args.configspace
     )
 
-    print('running main function, config space: ', configspace)
+    # Optuna applied for optimizing the hyperparameters of the random forest model of SMAC
+    def objective(trial):
+        rf_params = optimize_hyperparameters(trial)
 
-    # Setting up SMAC to run BOHB
-    scenario = Scenario(
-        name="ExampleMFRunWithBOHB",
+        scenario = Scenario(
+            name="HPO-on-SMAC",
+            configspace=configspace,
+            deterministic=True,
+            output_directory=args.working_dir,
+            seed=args.seed,
+            n_trials=args.n_trials,
+            max_budget=args.max_budget,
+            min_budget=args.min_budget,
+            n_workers=args.workers,
+            walltime_limit=args.runtime
+        )
+
+        smac = SMAC4MF(
+            target_function=cnn_from_cfg,
+            scenario=scenario,
+            initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=5),
+            intensifier=Hyperband(
+                scenario=scenario,
+                incumbent_selection="highest_budget",
+                eta=args.eta,
+            ),
+            model=SMAC4MF.get_model(scenario, **rf_params),
+            overwrite=True,
+            logging_level=args.log_level,  
+        )
+
+        incumbent = smac.optimize()
+        return smac.validate(incumbent)
+    
+
+    # create Optuna study object and optimize the objective function
+    study = optuna.create_study(direction="minimize", study_name="SMAC_HPO")
+    study.optimize(objective, n_trials=15, n_jobs=-1)
+
+    best_params = study.best_params
+    best_value = study.best_value
+    print("Best Parameters:", best_params)
+    print("Best Value:", best_value)
+
+    with open('best_optuna_params.txt', 'w+') as f:
+        f.write(str(best_params))
+
+
+    # re-run SMAC with the best parameters found by Optuna
+    best_scenario = Scenario(
+        name="HPO-on-SMAC(best)",
         configspace=configspace,
         deterministic=True,
         output_directory=args.working_dir,
@@ -374,25 +437,28 @@ if __name__ == "__main__":
         walltime_limit=args.runtime
     )
 
-    print('running main function, scenario created: ', scenario)
-
-    # You can mess with SMACs own hyperparameters here (checkout the documentation at https://automl.github.io/SMAC3)
-    smac = SMAC4MF(
+    best_smac = SMAC4MF(
         target_function=cnn_from_cfg,
-        scenario=scenario,
-        initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=5),
+        scenario=best_scenario,
+        initial_design=SMAC4MF.get_initial_design(scenario=best_scenario, n_configs=20),
         intensifier=Hyperband(
-            scenario=scenario,
+            scenario=best_scenario,
             incumbent_selection="highest_budget",
             eta=args.eta,
         ),
+        model=SMAC4MF.get_model(best_scenario, **best_params),
         overwrite=True,
-        logging_level=args.log_level,  # https://automl.github.io/SMAC3/main/advanced_usage/8_logging.html
+        logging_level=args.log_level,  
     )
 
-    print('running main function, smac created: ', smac)
+    best_incumbent = best_smac.optimize()
 
-    # Start optimization
-    incumbent = smac.optimize()
+    default_cost = best_smac.validate(configspace.get_default_configuration())
+    print(f"Default cost ({best_smac.intensifier.__class__.__name__}): {default_cost}")
 
-    print('running main function, incumbent finished: ', incumbent)
+    incumbent_cost = best_smac.validate(best_incumbent)
+    print(f"Incumbent cost ({best_smac.intensifier.__class__.__name__}): {incumbent_cost}")
+
+
+
+

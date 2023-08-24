@@ -19,10 +19,8 @@ from smac import MultiFidelityFacade as MFFacade
 from smac import Scenario
 from smac.facade import AbstractFacade
 from smac.intensifier.hyperband import Hyperband
-from smac.intensifier.successive_halving import SuccessiveHalving
 
-__copyright__ = "Copyright 2021, AutoML.org Freiburg-Hannover"
-__license__ = "3-clause BSD"
+import optuna
 
 
 dataset = load_digits()
@@ -88,7 +86,7 @@ class MLP:
         return 1 - np.mean(score)
 
 
-def plot_trajectory(facades: list[AbstractFacade], hps: list[str]) -> None:
+def plot_trajectory(facades: list[AbstractFacade]) -> None:
     """Plots the trajectory (incumbents) of the optimization process."""
     plt.figure()
     plt.title("Trajectory")
@@ -96,7 +94,7 @@ def plot_trajectory(facades: list[AbstractFacade], hps: list[str]) -> None:
     plt.ylabel(facades[0].scenario.objectives)
     plt.ylim(0, 0.4)
 
-    for i, facade in enumerate(facades, start=0):
+    for facade in facades:
         X, Y = [], []
         for item in facade.intensifier.trajectory:
             # Single-objective optimization
@@ -109,57 +107,112 @@ def plot_trajectory(facades: list[AbstractFacade], hps: list[str]) -> None:
             X.append(x)
             Y.append(y)
 
-        plt.plot(X, Y, label=hps[i])
+        plt.plot(X, Y, label=facade.intensifier.__class__.__name__)
         plt.scatter(X, Y, marker="x")
 
     plt.legend()
     plt.show()
 
 
+def optimize_hyperparameters(trial):
+    # Optimize parameters of the random forest model
+    n_trees = trial.suggest_int("n_trees", 10, 25)
+    ratio_features = trial.suggest_float("ratio_features", 0.7, 1.0)
+    min_samples_split = trial.suggest_int("min_samples_split", 2, 10)
+    min_samples_leaf = trial.suggest_int("min_samples_leaf", 1, 10)
+
+    return {
+        "n_trees": n_trees,
+        "ratio_features": ratio_features,
+        "min_samples_split": min_samples_split,
+        "min_samples_leaf": min_samples_leaf,
+    }
+
 if __name__ == "__main__":
     mlp = MLP()
 
     facades: list[AbstractFacade] = []
-    hps: list[str] = ["any_budget", "highest_observed_budget", "highest_budget"]
-    for incumbent_selection in hps: #SuccessiveHalving,
-        # Define our environment variables
+
+    def objective(trial):
+        rf_params = optimize_hyperparameters(trial)
+
         scenario = Scenario(
-            mlp.configspace,
-            walltime_limit=10,  # After 60 seconds, we stop the hyperparameter optimization
-            n_trials=500,  # Evaluate max 500 different trials
-            min_budget=1,  # Train the MLP using a hyperparameter configuration for at least 5 epochs
-            max_budget=25,  # Train the MLP using a hyperparameter configuration for at most 25 epochs
-            n_workers=8,
+            name="HPO-on-SMAC",
+            configspace=mlp.configspace,
+            walltime_limit=30,
+            n_trials=50,
+            min_budget=1,
+            max_budget=25,
+            n_workers=16,
+            deterministic=True,
         )
 
-        # We want to run five random configurations before starting the optimization.
-        initial_design = MFFacade.get_initial_design(scenario, n_configs=5)
-
-        # Create our intensifier
-        intensifier = Hyperband(scenario, incumbent_selection="highest_budget")
-
-        # Create our SMAC object and pass the scenario and the train method
-        smac = MFFacade(
+        initial_design = MFFacade.get_initial_design(scenario, n_configs=10)
+        intensifier = Hyperband(
             scenario,
-            mlp.train,
+            eta=3,
+            incumbent_selection="highest_budget",
+        )
+
+        smac = MFFacade(
+            scenario=scenario,
+            target_function=mlp.train,
             initial_design=initial_design,
             intensifier=intensifier,
+            model=MFFacade.get_model(scenario, **rf_params),  # Use get_model with optimized hyperparameters
             overwrite=True,
         )
 
-        # Let's optimize
         incumbent = smac.optimize()
+        return smac.validate(incumbent)
 
-        # Get cost of default configuration
-        #default_cost = smac.validate(mlp.configspace.get_default_configuration())
-        #print(f"Default cost ({intensifier.__class__.__name__}): {default_cost}")
+    study = optuna.create_study(direction="minimize", study_name="SMAC_HPO")
+    study.optimize(objective, n_trials=10, n_jobs=-1)
 
-        # Let's calculate the cost of the incumbent
-        incumbent_cost = smac.validate(incumbent)
-        print(f"Incumbent cost ({intensifier.__class__.__name__}): {incumbent_cost}")
+    best_params = study.best_params
+    best_value = study.best_value
+    print("Best Parameters:", best_params)
+    print("Best Value:", best_value)
 
-        facades.append(smac)
+    with open('best_optuna_params.txt', 'w+') as f:
+        f.write(str(best_params))
 
+    best_scenario = Scenario(
+        name="HPO-on-SMAC(best)",
+        configspace=mlp.configspace,
+        walltime_limit=100,
+        n_trials=200,
+        min_budget=1,
+        max_budget=25,
+        n_workers=16,
+        deterministic=True,
+    )
 
-    # Let's plot it
-    plot_trajectory(facades, hps)
+    best_initial_design = MFFacade.get_initial_design(best_scenario, n_configs=20)
+    best_intensifier = Hyperband(
+        best_scenario,
+        eta=3,
+        incumbent_selection="highest_budget",
+    )
+
+    best_smac = MFFacade(
+        scenario=best_scenario,
+        target_function=mlp.train,
+        initial_design=best_initial_design,
+        intensifier=best_intensifier,
+        model = MFFacade.get_model(best_scenario, **best_params),  # Use get_model with optimized hyperparameters
+        overwrite=True,
+    )
+
+    best_incumbent = best_smac.optimize()
+
+    default_cost = best_smac.validate(mlp.configspace.get_default_configuration())
+    print(f"Default cost ({best_intensifier.__class__.__name__}): {default_cost}")
+
+    incumbent_cost = best_smac.validate(best_incumbent)
+    print(f"Incumbent cost ({best_intensifier.__class__.__name__}): {incumbent_cost}")
+
+    facades.append(best_smac)
+
+    plot_trajectory(facades)
+
