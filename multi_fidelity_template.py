@@ -27,9 +27,11 @@ from ConfigSpace import (
 from ConfigSpace.read_and_write import json as cs_json
 from ConfigSpace.read_and_write import pcs_new, pcs
 
+import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
 from smac.facade.multi_fidelity_facade import MultiFidelityFacade as SMAC4MF
 from smac.intensifier.hyperband import Hyperband
+from smac.facade import AbstractFacade
 from smac.scenario import Scenario
 from torch.utils.data import DataLoader, Subset
 from dask.distributed import get_worker
@@ -55,7 +57,6 @@ def configuration_space(
 ) -> ConfigurationSpace:
     """Build Configuration Space which defines all parameters and their ranges."""
 
-    print('running configuration_space function')
 
     if cs_file is None:
         # This serves only as an example of how you can manually define a Configuration Space
@@ -63,17 +64,17 @@ def configuration_space(
         # we use continuous, integer and categorical parameters.
         cs = ConfigurationSpace(
             {
-                "n_conv_layers": Integer("n_conv_layers", (1, 3), default=3),
+                "n_conv_layers": Integer("n_conv_layers", (1, 2), default=3),
                 "use_BN": Categorical("use_BN", [True, False], default=True),
                 "global_avg_pooling": Categorical("global_avg_pooling", [True, False], default=True),
-                "n_channels_conv_0": Integer("n_channels_conv_0", (32, 512), default=512, log=True),
-                "n_channels_conv_1": Integer("n_channels_conv_1", (16, 512), default=512, log=True),
-                "n_channels_conv_2": Integer("n_channels_conv_2", (16, 512), default=512, log=True),
-                "n_fc_layers": Integer("n_fc_layers", (1, 3), default=3),
-                "n_channels_fc_0": Integer("n_channels_fc_0", (32, 512), default=512, log=True),
-                "n_channels_fc_1": Integer("n_channels_fc_1", (16, 512), default=512, log=True),
-                "n_channels_fc_2": Integer("n_channels_fc_2", (16, 512), default=512, log=True),
-                "batch_size": Integer("batch_size", (1, 1000), default=200, log=True),
+                "n_channels_conv_0": Integer("n_channels_conv_0", (32, 256), default=256, log=True),
+                "n_channels_conv_1": Integer("n_channels_conv_1", (16, 256), default=256, log=True),
+                # "n_channels_conv_2": Integer("n_channels_conv_2", (16, 256), default=256, log=True),
+                "n_fc_layers": Integer("n_fc_layers", (1, 2), default=3),
+                "n_channels_fc_0": Integer("n_channels_fc_0", (32, 256), default=256, log=True),
+                "n_channels_fc_1": Integer("n_channels_fc_1", (16, 256), default=256, log=True),
+                # "n_channels_fc_2": Integer("n_channels_fc_2", (16, 256), default=256, log=True),
+                # "batch_size": Integer("batch_size", (1, 1000), default=200, log=True),
                 "learning_rate_init": Float(
                     "learning_rate_init",
                     (1e-5, 1e-1),
@@ -85,18 +86,20 @@ def configuration_space(
                 "device": Constant("device", device),
                 "dataset": Constant("dataset", dataset),
                 "datasetpath": Constant("datasetpath", str(datasetpath.absolute())),
+                "batch_suze": Constant("batch_size", 50),
             }
         )
 
         # Add conditions to restrict the hyperparameter space
-        use_conv_layer_2 = InCondition(cs["n_channels_conv_2"], cs["n_conv_layers"], [3])
+        # use_conv_layer_2 = InCondition(cs["n_channels_conv_2"], cs["n_conv_layers"], [3])
         use_conv_layer_1 = InCondition(cs["n_channels_conv_1"], cs["n_conv_layers"], [2, 3])
 
-        use_fc_layer_2 = InCondition(cs["n_channels_fc_2"], cs["n_fc_layers"], [3])
+        # use_fc_layer_2 = InCondition(cs["n_channels_fc_2"], cs["n_fc_layers"], [3])
         use_fc_layer_1 = InCondition(cs["n_channels_fc_1"], cs["n_fc_layers"], [2, 3])
 
         # Add multiple conditions on hyperparameters at once:
-        cs.add_conditions([use_conv_layer_2, use_conv_layer_1, use_fc_layer_2, use_fc_layer_1])
+        # cs.add_conditions([use_conv_layer_2, use_conv_layer_1, use_fc_layer_2, use_fc_layer_1])
+        cs.add_conditions([use_conv_layer_1, use_fc_layer_1])
     else:
         with open(cs_file, "r") as fh:
             cs_string = fh.read()
@@ -119,7 +122,6 @@ def configuration_space(
         logging.debug(f"Configuration space:\n{cs}")
 
 
-    print('configuration_space function finished: ', cs)
     return cs
 
 
@@ -130,7 +132,6 @@ def get_optimizer_and_criterion(
     type[torch.nn.MSELoss | torch.nn.CrossEntropyLoss],
 ]:
     
-    print('running get_optimizer_and_criterion function')
 
     if cfg["optimizer"] == "AdamW":
         model_optimizer = torch.optim.AdamW
@@ -142,7 +143,6 @@ def get_optimizer_and_criterion(
     else:
         train_criterion = torch.nn.CrossEntropyLoss
 
-    print('get_optimizer_and_criterion function finished: ', model_optimizer, train_criterion)
 
     return model_optimizer, train_criterion
 
@@ -172,7 +172,6 @@ def cnn_from_cfg(
     val_accuracy cross validation accuracy
     """
 
-    print('running cnn_from_cfg function')
 
     try:
         worker_id = get_worker().name
@@ -188,7 +187,6 @@ def cnn_from_cfg(
     batch_size = cfg["batch_size"]
     ds_path = cfg["datasetpath"]
 
-    print('cnn_from_cfg function finished: ', lr, dataset, device, batch_size, ds_path)
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
     img_size = max(8, int(np.floor(budget)))  # example fidelity to use
@@ -216,7 +214,6 @@ def cnn_from_cfg(
     score = []
     cv_splits = cv.split(train_val, train_val.targets)
     for cv_index, (train_idx, valid_idx) in enumerate(cv_splits, start=1):
-        print('now in cross validation loop')
         logging.info(f"Worker:{worker_id} ------------ CV {cv_index} -----------")
         train_data = Subset(train_val, list(train_idx))
         val_data = Subset(train_val, list(valid_idx))
@@ -245,10 +242,9 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(20):  # 20 epochs
-            print('epoch: ', epoch)
+        for epoch in range(3):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
-            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
+            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{3}]")
             train_score, train_loss = model.train_fn(
                 optimizer=optimizer,
                 criterion=train_criterion,
@@ -256,16 +252,12 @@ def cnn_from_cfg(
                 device=model_device
             )
             logging.info(f"Worker:{worker_id} => Train accuracy {train_score:.3f} | loss {train_loss}")
-            print('train_score: ', train_score)
-            print('train_loss: ', train_loss)
 
         val_score = model.eval_fn(val_loader, device)
         logging.info(f"Worker:{worker_id} => Val accuracy {val_score:.3f}")
-        print('val_score: ', val_score)
         score.append(val_score)
 
     val_error = 1 - np.mean(score)  # because minimize
-    print('val_error: ', val_error)
 
     results = val_error
     return results
@@ -286,13 +278,37 @@ def optimize_hyperparameters(trial):
     }
 
 
-if __name__ == "__main__":
-    """
-    This is just an example of how to implement BOHB as an optimizer!
-    Here we do not consider any of the forbidden clauses.
-    """
+def plot_trajectory(facades: list[AbstractFacade]) -> None:
+    """Plots the trajectory (incumbents) of the optimization process."""
+    plt.figure()
+    plt.title("Trajectory")
+    plt.xlabel("Wallclock time [s]")
+    plt.ylabel(facades[0].scenario.objectives)
+    plt.ylim(0, 0.4)
 
-    print('running main function, parsing arguments')
+    for facade in facades:
+        X, Y = [], []
+        for item in facade.intensifier.trajectory:
+            # Single-objective optimization
+            assert len(item.config_ids) == 1
+            assert len(item.costs) == 1
+
+            y = item.costs[0]
+            x = item.walltime
+
+            X.append(x)
+            Y.append(y)
+
+        plt.plot(X, Y, label=facade.intensifier.__class__.__name__)
+        plt.scatter(X, Y, marker="x")
+
+    plt.legend()
+    plt.show()
+
+    # save the plot
+    plt.savefig('trajectory.png')
+
+if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="MF example using BOHB.")
     parser.add_argument(
@@ -310,7 +326,7 @@ if __name__ == "__main__":
     # 21600 default
     parser.add_argument(
         "--runtime",
-        default=500,
+        default=100,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -318,11 +334,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=10,
+        default=12,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
-        "--min_budget", type=float, default=1, help="Minimum budget (image_size) for BOHB"
+        "--min_budget", type=float, default=8, help="Minimum budget (image_size) for BOHB"
     )
     parser.add_argument("--eta", type=int, default=2, help="eta for BOHB")
     parser.add_argument("--seed", type=int, default=0, help="random seed")
@@ -331,11 +347,11 @@ if __name__ == "__main__":
     )
     # default 4
     parser.add_argument(
-        "--workers", type=int, default=16, help="num of workers to use with BOHB"
+        "--workers", type=int, default=8, help="num of workers to use with BOHB"
     )
     #default 500
     parser.add_argument(
-        "--n_trials", type=int, default=500, help="Number of iterations to run SMAC for"
+        "--n_trials", type=int, default=100, help="Number of iterations to run SMAC for"
     )
     parser.add_argument(
         "--cv_count",
@@ -375,6 +391,8 @@ if __name__ == "__main__":
         cs_file=args.configspace
     )
 
+    facades: list[AbstractFacade] = []
+
     # Optuna applied for optimizing the hyperparameters of the random forest model of SMAC
     def objective(trial):
         rf_params = optimize_hyperparameters(trial)
@@ -385,11 +403,11 @@ if __name__ == "__main__":
             deterministic=True,
             output_directory=args.working_dir,
             seed=args.seed,
-            n_trials=args.n_trials,
+            n_trials=100,
             max_budget=args.max_budget,
             min_budget=args.min_budget,
-            n_workers=args.workers,
-            walltime_limit=args.runtime
+            n_workers=8,
+            walltime_limit=200,
         )
 
         smac = SMAC4MF(
@@ -399,7 +417,7 @@ if __name__ == "__main__":
             intensifier=Hyperband(
                 scenario=scenario,
                 incumbent_selection="highest_budget",
-                eta=args.eta,
+                eta=3,
             ),
             model=SMAC4MF.get_model(scenario, **rf_params),
             overwrite=True,
@@ -416,8 +434,8 @@ if __name__ == "__main__":
 
     best_params = study.best_params
     best_value = study.best_value
-    print("Best Parameters:", best_params)
-    print("Best Value:", best_value)
+    print("Best Optuna Parameters:", best_params)
+    print("Best Optuna Value:", best_value)
 
     with open('best_optuna_params.txt', 'w+') as f:
         f.write(str(best_params))
@@ -459,6 +477,7 @@ if __name__ == "__main__":
     incumbent_cost = best_smac.validate(best_incumbent)
     print(f"Incumbent cost ({best_smac.intensifier.__class__.__name__}): {incumbent_cost}")
 
-
-
-
+   
+    # plot the trajectory of the final optimization process
+    facades.append(best_smac)
+    plot_trajectory(facades)
