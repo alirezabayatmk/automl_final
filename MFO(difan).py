@@ -165,7 +165,7 @@ def cnn_from_cfg(
         worker_id = 0
 
     # If data already existing on disk, set to False
-    download = True
+    download = False
 
     lr = cfg["learning_rate_init"]
     dataset = cfg["dataset"]
