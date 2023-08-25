@@ -64,17 +64,17 @@ def configuration_space(
         # we use continuous, integer and categorical parameters.
         cs = ConfigurationSpace(
             {
-                "n_conv_layers": Integer("n_conv_layers", (1, 2), default=3),
+                "n_conv_layers": Integer("n_conv_layers", (1, 3), default=3),
                 "use_BN": Categorical("use_BN", [True, False], default=True),
                 "global_avg_pooling": Categorical("global_avg_pooling", [True, False], default=True),
                 "n_channels_conv_0": Integer("n_channels_conv_0", (32, 256), default=256, log=True),
                 "n_channels_conv_1": Integer("n_channels_conv_1", (16, 256), default=256, log=True),
-                # "n_channels_conv_2": Integer("n_channels_conv_2", (16, 256), default=256, log=True),
-                "n_fc_layers": Integer("n_fc_layers", (1, 2), default=3),
+                "n_channels_conv_2": Integer("n_channels_conv_2", (16, 256), default=256, log=True),
+                "n_fc_layers": Integer("n_fc_layers", (1, 3), default=3),
                 "n_channels_fc_0": Integer("n_channels_fc_0", (32, 256), default=256, log=True),
                 "n_channels_fc_1": Integer("n_channels_fc_1", (16, 256), default=256, log=True),
-                # "n_channels_fc_2": Integer("n_channels_fc_2", (16, 256), default=256, log=True),
-                # "batch_size": Integer("batch_size", (1, 1000), default=200, log=True),
+                "n_channels_fc_2": Integer("n_channels_fc_2", (16, 256), default=256, log=True),
+                "batch_size": Integer("batch_size", (1, 500), default=200, log=True),
                 "learning_rate_init": Float(
                     "learning_rate_init",
                     (1e-5, 1e-1),
@@ -86,7 +86,6 @@ def configuration_space(
                 "device": Constant("device", device),
                 "dataset": Constant("dataset", dataset),
                 "datasetpath": Constant("datasetpath", str(datasetpath.absolute())),
-                "batch_suze": Constant("batch_size", 50),
             }
         )
 
@@ -242,9 +241,9 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(3):  # 20 epochs
+        for epoch in range(5):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
-            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{3}]")
+            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{5}]")
             train_score, train_loss = model.train_fn(
                 optimizer=optimizer,
                 criterion=train_criterion,
@@ -284,7 +283,6 @@ def plot_trajectory(facades: list[AbstractFacade]) -> None:
     plt.title("Trajectory")
     plt.xlabel("Wallclock time [s]")
     plt.ylabel(facades[0].scenario.objectives)
-    plt.ylim(0, 0.4)
 
     for facade in facades:
         X, Y = [], []
@@ -326,7 +324,7 @@ if __name__ == "__main__":
     # 21600 default
     parser.add_argument(
         "--runtime",
-        default=100,
+        default=21600,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -334,7 +332,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=12,
+        default=10,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
@@ -351,7 +349,7 @@ if __name__ == "__main__":
     )
     #default 500
     parser.add_argument(
-        "--n_trials", type=int, default=100, help="Number of iterations to run SMAC for"
+        "--n_trials", type=int, default=500, help="Number of iterations to run SMAC for"
     )
     parser.add_argument(
         "--cv_count",
@@ -403,11 +401,11 @@ if __name__ == "__main__":
             deterministic=True,
             output_directory=args.working_dir,
             seed=args.seed,
-            n_trials=100,
+            n_trials=500,
             max_budget=args.max_budget,
             min_budget=args.min_budget,
-            n_workers=8,
-            walltime_limit=200,
+            n_workers=10,
+            walltime_limit=300,
         )
 
         smac = SMAC4MF(
@@ -430,7 +428,7 @@ if __name__ == "__main__":
 
     # create Optuna study object and optimize the objective function
     study = optuna.create_study(direction="minimize", study_name="SMAC_HPO")
-    study.optimize(objective, n_trials=15, n_jobs=-1)
+    study.optimize(objective, n_trials=30, n_jobs=-1)
 
     best_params = study.best_params
     best_value = study.best_value
