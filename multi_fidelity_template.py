@@ -324,7 +324,7 @@ if __name__ == "__main__":
     # 21600 default
     parser.add_argument(
         "--runtime",
-        default=21600,
+        default=3600,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -401,11 +401,11 @@ if __name__ == "__main__":
             deterministic=True,
             output_directory=args.working_dir,
             seed=args.seed,
-            n_trials=500,
+            n_trials=100,
             max_budget=args.max_budget,
             min_budget=args.min_budget,
             n_workers=10,
-            walltime_limit=300,
+            walltime_limit=180,
         )
 
         smac = SMAC4MF(
@@ -428,7 +428,7 @@ if __name__ == "__main__":
 
     # create Optuna study object and optimize the objective function
     study = optuna.create_study(direction="minimize", study_name="SMAC_HPO")
-    study.optimize(objective, n_trials=30, n_jobs=-1)
+    study.optimize(objective, n_trials=20, n_jobs=-1)
 
     best_params = study.best_params
     best_value = study.best_value
@@ -456,7 +456,7 @@ if __name__ == "__main__":
     best_smac = SMAC4MF(
         target_function=cnn_from_cfg,
         scenario=best_scenario,
-        initial_design=SMAC4MF.get_initial_design(scenario=best_scenario, n_configs=20),
+        initial_design=SMAC4MF.get_initial_design(scenario=best_scenario, n_configs=5),
         intensifier=Hyperband(
             scenario=best_scenario,
             incumbent_selection="highest_budget",
