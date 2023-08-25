@@ -431,7 +431,9 @@ if __name__ == "__main__":
         "--min_budget", type=float, default=8, help="Minimum budget (image_size) for BOHB"
     )
     parser.add_argument("--eta", type=int, default=3, help="eta for BOHB")
+
     parser.add_argument("--seed", type=int, default=0, help="random seed")
+
     parser.add_argument(
         "--device", type=str, default="cpu", help="device to run the models"
     )
@@ -463,7 +465,7 @@ if __name__ == "__main__":
         default="NOTSET",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="debug_configspace.json",
+    parser.add_argument('--configspace', type=Path, default="default_configspace.json",
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
