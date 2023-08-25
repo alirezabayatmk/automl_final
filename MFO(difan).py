@@ -27,11 +27,9 @@ from ConfigSpace import (
 from ConfigSpace.read_and_write import json as cs_json
 from ConfigSpace.read_and_write import pcs_new, pcs
 
-import matplotlib.pyplot as plt
 from sklearn.model_selection import StratifiedKFold
 from smac.facade.multi_fidelity_facade import MultiFidelityFacade as SMAC4MF
 from smac.intensifier.hyperband import Hyperband
-from smac.facade import AbstractFacade
 from smac.scenario import Scenario
 from torch.utils.data import DataLoader, Subset
 from dask.distributed import get_worker
@@ -39,8 +37,6 @@ from dask.distributed import get_worker
 from cnn import Model
 
 from datasets import load_deep_woods, load_fashion_mnist
-
-import optuna
 
 logger = logging.getLogger(__name__)
 
@@ -56,8 +52,6 @@ def configuration_space(
         cs_file: Optional[str | Path] = None
 ) -> ConfigurationSpace:
     """Build Configuration Space which defines all parameters and their ranges."""
-
-
     if cs_file is None:
         # This serves only as an example of how you can manually define a Configuration Space
         # To illustrate different parameter types;
@@ -67,17 +61,17 @@ def configuration_space(
                 "n_conv_layers": Integer("n_conv_layers", (1, 3), default=3),
                 "use_BN": Categorical("use_BN", [True, False], default=True),
                 "global_avg_pooling": Categorical("global_avg_pooling", [True, False], default=True),
-                "n_channels_conv_0": Integer("n_channels_conv_0", (32, 256), default=256, log=True),
-                "n_channels_conv_1": Integer("n_channels_conv_1", (16, 256), default=256, log=True),
-                "n_channels_conv_2": Integer("n_channels_conv_2", (16, 256), default=256, log=True),
+                "n_channels_conv_0": Integer("n_channels_conv_0", (32, 512), default=512, log=True),
+                "n_channels_conv_1": Integer("n_channels_conv_1", (16, 512), default=512, log=True),
+                "n_channels_conv_2": Integer("n_channels_conv_2", (16, 512), default=512, log=True),
                 "n_fc_layers": Integer("n_fc_layers", (1, 3), default=3),
-                "n_channels_fc_0": Integer("n_channels_fc_0", (32, 256), default=256, log=True),
-                "n_channels_fc_1": Integer("n_channels_fc_1", (16, 256), default=256, log=True),
-                "n_channels_fc_2": Integer("n_channels_fc_2", (16, 256), default=256, log=True),
-                "batch_size": Integer("batch_size", (1, 500), default=200, log=True),
+                "n_channels_fc_0": Integer("n_channels_fc_0", (32, 512), default=512, log=True),
+                "n_channels_fc_1": Integer("n_channels_fc_1", (16, 512), default=512, log=True),
+                "n_channels_fc_2": Integer("n_channels_fc_2", (16, 512), default=512, log=True),
+                "batch_size": Integer("batch_size", (1, 1000), default=200, log=True),
                 "learning_rate_init": Float(
                     "learning_rate_init",
-                    (1e-5, 1e-1),
+                    (1e-5, 1.0),
                     default=1e-3,
                     log=True,
                 ),
@@ -98,7 +92,6 @@ def configuration_space(
 
         # Add multiple conditions on hyperparameters at once:
         cs.add_conditions([use_conv_layer_2, use_conv_layer_1, use_fc_layer_2, use_fc_layer_1])
-        cs.add_conditions([use_conv_layer_1, use_fc_layer_1])
     else:
         with open(cs_file, "r") as fh:
             cs_string = fh.read()
@@ -120,7 +113,6 @@ def configuration_space(
             cs.add_hyperparameter(Constant("datasetpath", str(datasetpath.absolute())))
         logging.debug(f"Configuration space:\n{cs}")
 
-
     return cs
 
 
@@ -130,8 +122,6 @@ def get_optimizer_and_criterion(
     type[torch.optim.AdamW | torch.optim.Adam],
     type[torch.nn.MSELoss | torch.nn.CrossEntropyLoss],
 ]:
-    
-
     if cfg["optimizer"] == "AdamW":
         model_optimizer = torch.optim.AdamW
     else:
@@ -141,7 +131,6 @@ def get_optimizer_and_criterion(
         train_criterion = torch.nn.MSELoss
     else:
         train_criterion = torch.nn.CrossEntropyLoss
-
 
     return model_optimizer, train_criterion
 
@@ -170,22 +159,19 @@ def cnn_from_cfg(
     -------
     val_accuracy cross validation accuracy
     """
-
-
     try:
         worker_id = get_worker().name
     except ValueError:
         worker_id = 0
 
     # If data already existing on disk, set to False
-    download = False
+    download = True
 
     lr = cfg["learning_rate_init"]
     dataset = cfg["dataset"]
     device = cfg["device"]
     batch_size = cfg["batch_size"]
     ds_path = cfg["datasetpath"]
-
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
     img_size = max(8, int(np.floor(budget)))  # example fidelity to use
@@ -241,9 +227,9 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(5):  # 20 epochs
+        for epoch in range(20):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
-            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{5}]")
+            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
             train_score, train_loss = model.train_fn(
                 optimizer=optimizer,
                 criterion=train_criterion,
@@ -262,51 +248,11 @@ def cnn_from_cfg(
     return results
 
 
-def optimize_hyperparameters(trial):
-    # Optimize parameters of the random forest model
-    n_trees = trial.suggest_int("n_trees", 10, 25)
-    ratio_features = trial.suggest_float("ratio_features", 0.7, 1.0)
-    min_samples_split = trial.suggest_int("min_samples_split", 2, 10)
-    min_samples_leaf = trial.suggest_int("min_samples_leaf", 1, 10)
-
-    return {
-        "n_trees": n_trees,
-        "ratio_features": ratio_features,
-        "min_samples_split": min_samples_split,
-        "min_samples_leaf": min_samples_leaf,
-    }
-
-
-def plot_trajectory(facades: list[AbstractFacade]) -> None:
-    """Plots the trajectory (incumbents) of the optimization process."""
-    plt.figure()
-    plt.title("Trajectory")
-    plt.xlabel("Wallclock time [s]")
-    plt.ylabel(facades[0].scenario.objectives)
-
-    for facade in facades:
-        X, Y = [], []
-        for item in facade.intensifier.trajectory:
-            # Single-objective optimization
-            assert len(item.config_ids) == 1
-            assert len(item.costs) == 1
-
-            y = item.costs[0]
-            x = item.walltime
-
-            X.append(x)
-            Y.append(y)
-
-        plt.plot(X, Y, label=facade.intensifier.__class__.__name__)
-        plt.scatter(X, Y, marker="x")
-
-    plt.legend()
-    plt.show()
-
-    # save the plot
-    plt.savefig('trajectory.png')
-
 if __name__ == "__main__":
+    """
+    This is just an example of how to implement BOHB as an optimizer!
+    Here we do not consider any of the forbidden clauses.
+    """
 
     parser = argparse.ArgumentParser(description="MF example using BOHB.")
     parser.add_argument(
@@ -321,14 +267,12 @@ if __name__ == "__main__":
         type=str,
         help="directory where intermediate results are stored",
     )
-    # 21600 default
     parser.add_argument(
         "--runtime",
-        default=3600,
+        default=1200,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
-    # 10 default
     parser.add_argument(
         "--max_budget",
         type=float,
@@ -336,18 +280,16 @@ if __name__ == "__main__":
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
-        "--min_budget", type=float, default=8, help="Minimum budget (image_size) for BOHB"
+        "--min_budget", type=float, default=1, help="Minimum budget (image_size) for BOHB"
     )
     parser.add_argument("--eta", type=int, default=2, help="eta for BOHB")
     parser.add_argument("--seed", type=int, default=0, help="random seed")
     parser.add_argument(
         "--device", type=str, default="cpu", help="device to run the models"
     )
-    # default 4
     parser.add_argument(
-        "--workers", type=int, default=10, help="num of workers to use with BOHB"
+        "--workers", type=int, default=8, help="num of workers to use with BOHB"
     )
-    #default 500
     parser.add_argument(
         "--n_trials", type=int, default=500, help="Number of iterations to run SMAC for"
     )
@@ -389,60 +331,9 @@ if __name__ == "__main__":
         cs_file=args.configspace
     )
 
-    facades: list[AbstractFacade] = []
-
-    # Optuna applied for optimizing the hyperparameters of the random forest model of SMAC
-    def objective(trial):
-        rf_params = optimize_hyperparameters(trial)
-
-        scenario = Scenario(
-            name="HPO-on-SMAC",
-            configspace=configspace,
-            deterministic=True,
-            output_directory=args.working_dir,
-            seed=args.seed,
-            n_trials=100,
-            max_budget=args.max_budget,
-            min_budget=args.min_budget,
-            n_workers=10,
-            walltime_limit=180,
-        )
-
-        smac = SMAC4MF(
-            target_function=cnn_from_cfg,
-            scenario=scenario,
-            initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=5),
-            intensifier=Hyperband(
-                scenario=scenario,
-                incumbent_selection="highest_budget",
-                eta=3,
-            ),
-            model=SMAC4MF.get_model(scenario, **rf_params),
-            overwrite=True,
-            logging_level=args.log_level,  
-        )
-
-        incumbent = smac.optimize()
-        return smac.validate(incumbent)
-    
-
-    # create Optuna study object and optimize the objective function
-    study = optuna.create_study(direction="minimize", study_name="SMAC_HPO")
-    study.optimize(objective, n_trials=20, n_jobs=-1)
-
-    best_params = study.best_params
-    best_value = study.best_value
-    print("Best Optuna Parameters:", best_params)
-    print("Best Optuna Value:", best_value)
-
-    with open('best_optuna_params.txt', 'w+') as f:
-        f.write(str(best_params))
-        f.close()
-
-
-    # re-run SMAC with the best parameters found by Optuna
-    best_scenario = Scenario(
-        name="HPO-on-SMAC(best)",
+    # Setting up SMAC to run BOHB
+    scenario = Scenario(
+        name="ExampleMFRunWithBOHB",
         configspace=configspace,
         deterministic=True,
         output_directory=args.working_dir,
@@ -454,29 +345,19 @@ if __name__ == "__main__":
         walltime_limit=args.runtime
     )
 
-    best_smac = SMAC4MF(
+    # You can mess with SMACs own hyperparameters here (checkout the documentation at https://automl.github.io/SMAC3)
+    smac = SMAC4MF(
         target_function=cnn_from_cfg,
-        scenario=best_scenario,
-        initial_design=SMAC4MF.get_initial_design(scenario=best_scenario, n_configs=5),
+        scenario=scenario,
+        initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=2),
         intensifier=Hyperband(
-            scenario=best_scenario,
+            scenario=scenario,
             incumbent_selection="highest_budget",
             eta=args.eta,
         ),
-        model=SMAC4MF.get_model(best_scenario, **best_params),
         overwrite=True,
-        logging_level=args.log_level,  
+        logging_level=args.log_level,  # https://automl.github.io/SMAC3/main/advanced_usage/8_logging.html
     )
 
-    best_incumbent = best_smac.optimize()
-
-    default_cost = best_smac.validate(configspace.get_default_configuration())
-    print(f"Default cost ({best_smac.intensifier.__class__.__name__}): {default_cost}")
-
-    incumbent_cost = best_smac.validate(best_incumbent)
-    print(f"Incumbent cost ({best_smac.intensifier.__class__.__name__}): {incumbent_cost}")
-
-   
-    # plot the trajectory of the final optimization process
-    facades.append(best_smac)
-    plot_trajectory(facades)
+    # Start optimization
+    incumbent = smac.optimize()
