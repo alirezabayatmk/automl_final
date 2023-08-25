@@ -176,7 +176,7 @@ def cnn_from_cfg(
     ds_path = cfg["datasetpath"]
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
-    img_size = max(4, int(np.floor(budget)))  # example fidelity to use
+    img_size = 16 # max(8, int(np.floor(budget)))  # example fidelity to use
 
     # Device configuration
     torch.manual_seed(seed)
@@ -229,7 +229,7 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(20):  # 20 epochs
+        for epoch in range(int(np.floor(budget))):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
             logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
             train_score, train_loss = model.train_fn(
@@ -424,11 +424,11 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=16,
+        default=12,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
-        "--min_budget", type=float, default=8, help="Minimum budget (image_size) for BOHB"
+        "--min_budget", type=float, default=3, help="Minimum budget (image_size) for BOHB"
     )
     parser.add_argument("--eta", type=int, default=3, help="eta for BOHB")
 
