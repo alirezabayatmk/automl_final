@@ -26,8 +26,10 @@ from ConfigSpace import (
 )
 from ConfigSpace.read_and_write import json as cs_json
 from ConfigSpace.read_and_write import pcs_new, pcs
+from matplotlib import pyplot as plt
 
 from sklearn.model_selection import StratifiedKFold
+from smac.facade import AbstractFacade
 from smac.facade.multi_fidelity_facade import MultiFidelityFacade as SMAC4MF
 from smac.intensifier.hyperband import Hyperband
 from smac.scenario import Scenario
@@ -250,8 +252,7 @@ def cnn_from_cfg(
 
 def cnn_from_cfg_test(
         cfg: Configuration,
-        seed: int,
-        budget: float,
+        seed: int
 ) -> float:
     """
     Creates an instance of the torch_model and fits the given data on it.
@@ -283,7 +284,7 @@ def cnn_from_cfg_test(
     ds_path = cfg["datasetpath"]
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
-    img_size = max(8, int(np.floor(budget)))  # example fidelity to use
+    img_size = 16  # example fidelity to use
 
     # Device configuration
     torch.manual_seed(seed)
@@ -366,6 +367,34 @@ def cnn_from_cfg_test(
     logging.info(f"Worker:{worker_id} => Test accuracy {test_score:.3f}")
 
     return test_score
+
+def plot_trajectory(facade: AbstractFacade) -> None:
+    """Plots the trajectory (incumbents) of the optimization process."""
+    plt.figure()
+    plt.title("Trajectory")
+    plt.xlabel("Wallclock time [s]")
+    plt.ylabel(facade.scenario.objectives)
+
+    X, Y = [], []
+    for item in facade.intensifier.trajectory:
+        # Single-objective optimization
+        assert len(item.config_ids) == 1
+        assert len(item.costs) == 1
+
+        y = item.costs[0]
+        x = item.walltime
+
+        X.append(x)
+        Y.append(y)
+
+    plt.plot(X, Y, label=facade.intensifier.__class__.__name__)
+    plt.scatter(X, Y, marker="x")
+
+    plt.legend()
+    plt.show()
+
+    # save the plot
+    plt.savefig('trajectory.png')
 
 if __name__ == "__main__":
     """
@@ -480,3 +509,5 @@ if __name__ == "__main__":
 
     # Start optimization
     incumbent = smac.optimize()
+    test_score = cnn_from_cfg_test(incumbent, args.seed)
+    plot_trajectory(smac)
