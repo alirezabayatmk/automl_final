@@ -424,13 +424,13 @@ if __name__ == "__main__":
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=16,
+        default=10,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
-        "--min_budget", type=float, default=8, help="Minimum budget (image_size) for BOHB"
+        "--min_budget", type=float, default=2, help="Minimum budget (image_size) for BOHB"
     )
-    parser.add_argument("--eta", type=int, default=3, help="eta for BOHB")
+    parser.add_argument("--eta", type=int, default=2, help="eta for BOHB")
 
     parser.add_argument("--seed", type=int, default=0, help="random seed")
 
