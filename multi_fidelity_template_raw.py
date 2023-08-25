@@ -417,14 +417,14 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--runtime",
-        default=3600,
+        default=2700,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=32,
+        default=16,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
