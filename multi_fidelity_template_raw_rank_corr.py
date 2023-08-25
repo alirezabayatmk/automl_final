@@ -27,13 +27,14 @@ from ConfigSpace import (
 from ConfigSpace.read_and_write import json as cs_json
 from ConfigSpace.read_and_write import pcs_new, pcs
 from matplotlib import pyplot as plt
+from scipy.stats import spearmanr
 
 from sklearn.model_selection import StratifiedKFold
 from smac.facade import AbstractFacade
 from smac.facade.multi_fidelity_facade import MultiFidelityFacade as SMAC4MF
 from smac.intensifier.hyperband import Hyperband
 from smac.scenario import Scenario
-from torch.utils.data import DataLoader, Subset
+from torch.utils.data import DataLoader, Subset, RandomSampler
 from dask.distributed import get_worker
 
 from cnn import Model
@@ -141,10 +142,10 @@ def get_optimizer_and_criterion(
 # The signature of the function determines what arguments are passed to it
 # i.e., budget is passed to the target algorithm if it is present in the signature
 # This is specific to SMAC
-def cnn_from_cfg(
+def cnn_from_cfg_epoch(
         cfg: Configuration,
         seed: int,
-        budget: float,
+        budget: int,
 ) -> float:
     """
     Creates an instance of the torch_model and fits the given data on it.
@@ -167,7 +168,7 @@ def cnn_from_cfg(
         worker_id = 0
 
     # If data already existing on disk, set to False
-    download = True
+    download = False
 
     lr = cfg["learning_rate_init"]
     dataset = cfg["dataset"]
@@ -176,7 +177,7 @@ def cnn_from_cfg(
     ds_path = cfg["datasetpath"]
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
-    img_size = max(4, int(np.floor(budget)))  # example fidelity to use
+    img_size = 32 # example fidelity to use
 
     # Device configuration
     torch.manual_seed(seed)
@@ -196,7 +197,11 @@ def cnn_from_cfg(
 
     # returns the cross-validation accuracy
     # to make CV splits consistent
-    cv = StratifiedKFold(n_splits=3, random_state=CV_SPLIT_SEED, shuffle=True)
+    cv = StratifiedKFold(n_splits=fidelity_budget[1] if fidelity_budget[0] == 'cv_splits' else 2
+                         , random_state=CV_SPLIT_SEED, shuffle=True)
+    """if fidelity_budget[0] == 'sampling_ratio':
+        #indices = [np.random.choice(len(train_val), int(len(train_val) * fidelity_budget[1]), replace=False)]
+        train_val = RandomSampler(train_val, num_samples=int(len(train_val) * fidelity_budget[1]))"""
 
     score = []
     cv_splits = cv.split(train_val, train_val.targets)
@@ -204,7 +209,7 @@ def cnn_from_cfg(
         logging.info(f"Worker:{worker_id} ------------ CV {cv_index} -----------")
         train_data = Subset(train_val, list(train_idx))
         val_data = Subset(train_val, list(valid_idx))
-        
+
         train_loader = DataLoader(
             dataset=train_data,
             batch_size=batch_size,
@@ -229,7 +234,8 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(20):  # 20 epochs
+        epochs = int(np.floor(budget))
+        for epoch in range(epochs):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
             logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
             train_score, train_loss = model.train_fn(
@@ -238,7 +244,7 @@ def cnn_from_cfg(
                 loader=train_loader,
                 device=model_device
             )
-            logging.info(f"Worker:{worker_id} => Train accuracy {train_score:.3f} | loss {train_loss}")
+            #logging.info(f"Worker:{worker_id} => Train accuracy {train_score:.3f} | loss {train_loss}")
 
         val_score = model.eval_fn(val_loader, device)
         logging.info(f"Worker:{worker_id} => Val accuracy {val_score:.3f}")
@@ -249,6 +255,117 @@ def cnn_from_cfg(
     results = val_error
     return results
 
+def cnn_from_cfg_img_size(
+        cfg: Configuration,
+        seed: int,
+        budget: int,
+) -> float:
+    """
+    Creates an instance of the torch_model and fits the given data on it.
+    This is the function-call we try to optimize. Chosen values are stored in
+    the configuration (cfg).
+
+    :param cfg: Configuration (basically a dictionary)
+        configuration chosen by smac
+    :param seed: int or RandomState
+        used to initialize the rf's random generator
+    :param budget: float
+        used to set max iterations for the MLP
+    Returns
+    -------
+    val_accuracy cross validation accuracy
+    """
+    try:
+        worker_id = get_worker().name
+    except ValueError:
+        worker_id = 0
+
+    # If data already existing on disk, set to False
+    download = False
+
+    lr = cfg["learning_rate_init"]
+    dataset = cfg["dataset"]
+    device = cfg["device"]
+    batch_size = cfg["batch_size"]
+    ds_path = cfg["datasetpath"]
+
+    # unchangeable constants that need to be adhered to, the maximum fidelities
+    img_size = max(8, int(np.floor(budget))) # example fidelity to use
+
+    # Device configuration
+    torch.manual_seed(seed)
+    model_device = torch.device(device)
+
+    if "fashion_mnist" in dataset:
+        input_shape, train_val, _ = load_fashion_mnist(datadir=Path(ds_path, "FashionMNIST"))
+    elif "deepweedsx" in dataset:
+        input_shape, train_val, _ = load_deep_woods(
+            datadir=Path(ds_path, "deepweedsx"),
+            resize=(img_size, img_size),
+            balanced="balanced" in dataset,
+            download=download,
+        )
+    else:
+        raise NotImplementedError
+
+    # returns the cross-validation accuracy
+    # to make CV splits consistent
+    cv = StratifiedKFold(n_splits=2, random_state=CV_SPLIT_SEED, shuffle=True)
+    #if fidelity_budget[0] == 'sampling_ratio':
+    #    #indices = [np.random.choice(len(train_val), int(len(train_val) * fidelity_budget[1]), replace=False)]
+    #    train_val = RandomSampler(train_val, num_samples=int(len(train_val) * fidelity_budget[1]))
+
+    score = []
+    cv_splits = cv.split(train_val, train_val.targets)
+    for cv_index, (train_idx, valid_idx) in enumerate(cv_splits, start=1):
+        logging.info(f"Worker:{worker_id} ------------ CV {cv_index} -----------")
+        train_data = Subset(train_val, list(train_idx))
+        val_data = Subset(train_val, list(valid_idx))
+
+        train_loader = DataLoader(
+            dataset=train_data,
+            batch_size=batch_size,
+            shuffle=True,
+        )
+        val_loader = DataLoader(
+            dataset=val_data,
+            batch_size=batch_size,
+            shuffle=False,
+        )
+
+        model = Model(
+            config=cfg,
+            input_shape=input_shape,
+            num_classes=len(train_val.classes),
+        )
+        model = model.to(model_device)
+
+        # summary(model, input_shape, device=device)
+
+        model_optimizer, train_criterion = get_optimizer_and_criterion(cfg)
+        optimizer = model_optimizer(model.parameters(), lr=lr)
+        train_criterion = train_criterion().to(device)
+
+        epochs = 20
+        for epoch in range(epochs):  # 20 epochs
+            logging.info(f"Worker:{worker_id} " + "#" * 50)
+            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
+            train_score, train_loss = model.train_fn(
+                optimizer=optimizer,
+                criterion=train_criterion,
+                loader=train_loader,
+                device=model_device
+            )
+            #logging.info(f"Worker:{worker_id} => Train accuracy {train_score:.3f} | loss {train_loss}")
+
+        val_score = model.eval_fn(val_loader, device)
+        logging.info(f"Worker:{worker_id} => Val accuracy {val_score:.3f}")
+        score.append(val_score)
+
+    val_error = 1 - np.mean(score)  # because minimize
+
+    results = val_error
+    return results
 
 def cnn_from_cfg_test(
         cfg: Configuration,
@@ -343,16 +460,16 @@ def cnn_from_cfg_test(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(10):  # 20 epochs
+        for epoch in range(20):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
-            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{10}]")
+            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
             train_score, train_loss = model.train_fn(
                 optimizer=optimizer,
                 criterion=train_criterion,
                 loader=train_loader,
                 device=model_device
             )
-            logging.info(f"Worker:{worker_id} => Train accuracy epoch {train_score:.3f} | loss {train_loss}")
+            #logging.info(f"Worker:{worker_id} => Train accuracy epoch {train_score:.3f} | loss {train_loss}")
             val_score_epoch = model.eval_fn(val_loader, device)
             logging.info(f"Worker:{worker_id} => Val accuracy epoch {val_score_epoch:.3f}")
 
@@ -396,6 +513,23 @@ def plot_trajectory(facade: AbstractFacade) -> None:
     # save the plot
     plt.savefig('trajectory.png')
 
+def calc_spearman_correlation(confs: list[Configuration], seed: int, fidelity_budgets: dict) -> float:
+    sp_correlations = dict()
+
+    for fidelity, budgets in fidelity_budgets.items():
+        print(f"fidelity: {fidelity}: eval confs with {budgets[0]} budget")
+        if fidelity == "epochs":
+            eval_cheaps = [cnn_from_cfg_epoch(conf, seed, budgets[0]) for conf in confs]
+            print(f"fidelity: {fidelity}: eval confs with {budgets[1]} budget ")
+            eval_exp = [cnn_from_cfg_epoch(conf, seed, budgets[1]) for conf in confs]
+        if fidelity == "img_size":
+            eval_cheaps = [cnn_from_cfg_img_size(conf, seed, budgets[0]) for conf in confs]
+            print(f"fidelity: {fidelity}: eval confs with {budgets[1]} budget ")
+            eval_exp = [cnn_from_cfg_img_size(conf, seed, budgets[1]) for conf in confs]
+        sp_correlations.update({fidelity: spearmanr(eval_cheaps, eval_exp)})
+
+    return sp_correlations
+
 if __name__ == "__main__":
     """
     This is just an example of how to implement BOHB as an optimizer!
@@ -417,18 +551,18 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--runtime",
-        default=21600,
+        default=15000,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
     parser.add_argument(
         "--max_budget",
         type=float,
-        default=10,
+        default=16,
         help="maximal budget (image_size) to use with BOHB",
     )
     parser.add_argument(
-        "--min_budget", type=float, default=2, help="Minimum budget (image_size) for BOHB"
+        "--min_budget", type=float, default=8, help="Minimum budget (image_size) for BOHB"
     )
     parser.add_argument("--eta", type=int, default=2, help="eta for BOHB")
 
@@ -462,10 +596,10 @@ if __name__ == "__main__":
             "INFO",
             "DEBUG",
         ],
-        default="NOTSET",
+        default="INFO",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="default_configspace.json",
+    parser.add_argument('--configspace', type=Path, default="default_configspace_edit.json",
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
@@ -481,6 +615,20 @@ if __name__ == "__main__":
         cs_file=args.configspace
     )
 
+    print('determine the best fidelity based on rank correlation')
+    start = time.time()
+    sample_configs = configspace.sample_configuration(20)
+    fidelity_budgets = {'img_size': (8, 32), 'epochs': (5, 20)}#, 'cv_splits': (1, 2), 'sampling_ratio': (10, 100)}
+    sp_rank_corr = calc_spearman_correlation(sample_configs, args.seed, fidelity_budgets)
+    print(sp_rank_corr)
+    significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}# if v.pvalue < 0.05}
+    sorted_sp_corr = dict(sorted(significant_sp_corr.items(), key=lambda item: item[1].statistic))
+    best_fidelity = list(sorted_sp_corr.items())[-1]  # yields the fidelity with the highest spearman rank correlation
+
+    print(f"The best fidelity based on the spearman rank correlation is the fidelity {best_fidelity[0]}"
+          f" with a spr of {best_fidelity[1]}")
+    end = time.time()
+    print("Time for determining the best of 2 fidelities", end - start)
     # Setting up SMAC to run BOHB
     scenario = Scenario(
         name="ExampleMFRunWithBOHB",
@@ -489,15 +637,15 @@ if __name__ == "__main__":
         output_directory=args.working_dir,
         seed=args.seed,
         n_trials=args.n_trials,
-        max_budget=args.max_budget,
-        min_budget=args.min_budget,
+        max_budget=fidelity_budgets[best_fidelity[0]][1],
+        min_budget=fidelity_budgets[best_fidelity[0]][0],
         n_workers=args.workers,
         walltime_limit=args.runtime
     )
 
     # You can mess with SMACs own hyperparameters here (checkout the documentation at https://automl.github.io/SMAC3)
     smac = SMAC4MF(
-        target_function=cnn_from_cfg,
+        target_function=cnn_from_cfg_img_size if best_fidelity[0] == "img_size" else cnn_from_cfg_epoch,
         scenario=scenario,
         initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=2),
         intensifier=Hyperband(

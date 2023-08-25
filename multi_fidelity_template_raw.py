@@ -396,6 +396,8 @@ def plot_trajectory(facade: AbstractFacade) -> None:
     # save the plot
     plt.savefig('trajectory.png')
 
+
+
 if __name__ == "__main__":
     """
     This is just an example of how to implement BOHB as an optimizer!
