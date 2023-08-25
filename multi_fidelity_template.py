@@ -90,14 +90,14 @@ def configuration_space(
         )
 
         # Add conditions to restrict the hyperparameter space
-        # use_conv_layer_2 = InCondition(cs["n_channels_conv_2"], cs["n_conv_layers"], [3])
+        use_conv_layer_2 = InCondition(cs["n_channels_conv_2"], cs["n_conv_layers"], [3])
         use_conv_layer_1 = InCondition(cs["n_channels_conv_1"], cs["n_conv_layers"], [2, 3])
 
-        # use_fc_layer_2 = InCondition(cs["n_channels_fc_2"], cs["n_fc_layers"], [3])
+        use_fc_layer_2 = InCondition(cs["n_channels_fc_2"], cs["n_fc_layers"], [3])
         use_fc_layer_1 = InCondition(cs["n_channels_fc_1"], cs["n_fc_layers"], [2, 3])
 
         # Add multiple conditions on hyperparameters at once:
-        # cs.add_conditions([use_conv_layer_2, use_conv_layer_1, use_fc_layer_2, use_fc_layer_1])
+        cs.add_conditions([use_conv_layer_2, use_conv_layer_1, use_fc_layer_2, use_fc_layer_1])
         cs.add_conditions([use_conv_layer_1, use_fc_layer_1])
     else:
         with open(cs_file, "r") as fh:
@@ -345,7 +345,7 @@ if __name__ == "__main__":
     )
     # default 4
     parser.add_argument(
-        "--workers", type=int, default=8, help="num of workers to use with BOHB"
+        "--workers", type=int, default=10, help="num of workers to use with BOHB"
     )
     #default 500
     parser.add_argument(
