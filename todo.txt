@@ -21,3 +21,9 @@ Ranking of the approaches by their priority
 3. optimize the HPs of the multi-fidelity method
 - from the chosen method, find the best HPs of it using HPO methods (?)
 
+-------------------
+
+1. plotting 
+2. multi-fidelity selection (image size, epochs, sampling, number of cross-validation folds)
+- mean validation error vs performance improvement rate vs spearman rank correlation
+3. Optuna on SMAC
