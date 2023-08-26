@@ -190,9 +190,8 @@ def cnn_from_cfg(
 
     # set fidelities and budgets
 
-    img_size = np.floor(budget) if fidelity == "img_size" else 32
-    epochs = np.floor(budget) if fidelity == "epochs" else 20
-
+    img_size = int(np.floor(budget)) if fidelity == "img_size" else 32
+    epochs = int(np.floor(budget)) if fidelity == "epochs" else 20
 
     print('cnn_from_cfg function finished: ', lr, dataset, device, batch_size, ds_path)
 
