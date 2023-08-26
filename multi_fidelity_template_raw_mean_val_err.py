@@ -396,7 +396,7 @@ def plot_trajectory(results_per_seed: dict) -> None:
         plt.scatter(X, Y, marker="x")
 
     plt.legend()
-    plt.show()
+    plt.savefig('trajectory.png')
 
 
 def train_mf_selection(cs: ConfigurationSpace) -> None:
