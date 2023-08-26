@@ -551,7 +551,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--runtime",
-        default=15000,
+        default=3600,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
