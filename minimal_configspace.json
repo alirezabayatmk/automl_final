@@ -111,6 +111,16 @@
       "lower": 16,
       "upper": 64,
       "default": 64
+    },
+    {
+      "name": "optimizer",
+      "type": "constant",
+      "value": "AdamW"
+    },
+    {
+      "name": "train_criterion",
+      "type": "constant",
+      "value": "cross_entropy_loss"
     }
   ],
   "conditions": [
