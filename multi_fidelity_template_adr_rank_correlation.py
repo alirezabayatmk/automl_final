@@ -270,10 +270,11 @@ def cnn_from_cfg(
     return results
 
 
-def cnn_from_cfg_general(
+def cnn_from_cfg(
         cfg: Configuration,
         seed: int,
-        fidelity_budget: tuple
+        fidelity: str,
+        budget: float,
 ) -> float:
     """
     Creates an instance of the torch_model and fits the given data on it.
@@ -290,9 +291,6 @@ def cnn_from_cfg_general(
     -------
     val_accuracy cross validation accuracy
     """
-
-    print('running cnn_from_cfg function')
-
     try:
         worker_id = get_worker().name
     except ValueError:
@@ -307,10 +305,11 @@ def cnn_from_cfg_general(
     batch_size = cfg["batch_size"]
     ds_path = cfg["datasetpath"]
 
-    print('cnn_from_cfg function finished: ', lr, dataset, device, batch_size, ds_path)
-
-    # unchangeable constants that need to be adhered to, the maximum fidelities
-    img_size = fidelity_budget[1] if fidelity_budget[0] == 'img_size' else 16  # example fidelity to use
+    # determine fidelity and used budget
+    cv_splits = int(np.floor(budget)) if fidelity == "cv_splits" else 3
+    img_size = int(np.floor(budget)) if fidelity == "img_size" else 32
+    epochs = int(np.floor(budget)) if fidelity == "epochs" else 20
+    sampling_ratio =  int(np.floor(budget)) if fidelity == "epochs" else 100
 
     # Device configuration
     torch.manual_seed(seed)
@@ -328,13 +327,14 @@ def cnn_from_cfg_general(
     else:
         raise NotImplementedError
 
+    if fidelity == "sampling_ratio":
+        indices = [np.random.choice(len(train_val), int(len(train_val) * sampling_ratio), replace=False)]
+        train_val = Subset(train_val, indices)
+
     # returns the cross-validation accuracy
     # to make CV splits consistent
-    cv = StratifiedKFold(n_splits=fidelity_budget[1] if fidelity_budget[0] == 'cv_splits' else 2
-                         , random_state=CV_SPLIT_SEED, shuffle=True)
-    äindices = [np.random.choice(len(train_val), int(len(train_val)/3), replace=False)]
-    #train_val = Subset(train_val, indices)# if fidelity_budget[0]\
-                                                               #  == 'sampling_ratio' else train_val
+    cv = StratifiedKFold(n_splits=cv_splits, random_state=CV_SPLIT_SEED, shuffle=True)
+
     score = []
     cv_splits = cv.split(train_val, train_val.targets)
     for cv_index, (train_idx, valid_idx) in enumerate(cv_splits, start=1):
@@ -366,7 +366,6 @@ def cnn_from_cfg_general(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        epochs = fidelity_budget[1] if fidelity_budget[0] == 'epochs' else 10
         for epoch in range(epochs):  # 20 epochs
             logging.info(f"Worker:{worker_id} " + "#" * 50)
             logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
@@ -377,30 +376,16 @@ def cnn_from_cfg_general(
                 device=model_device
             )
             logging.info(f"Worker:{worker_id} => Train accuracy {train_score:.3f} | loss {train_loss}")
-            #print('train_score: ', train_score)
-            #print('train_loss: ', train_loss)
 
         val_score = model.eval_fn(val_loader, device)
         logging.info(f"Worker:{worker_id} => Val accuracy {val_score:.3f}")
-        #print('val_score: ', val_score)
         score.append(val_score)
 
     val_error = 1 - np.mean(score)  # because minimize
-    #print('val_error: ', val_error)
 
     results = val_error
     return results
 
-def random_subset(dataset, sampling_ratio):
-    if sampling_ratio < 0 or sampling_ratio > 100:
-        raise ValueError("Sampling ratio should be between 0 and 100.")
-
-    num_samples = int(len(dataset) * (sampling_ratio / 100))
-    random_indices = np.random.choice(len(dataset), num_samples, replace=False)
-    print(dataset)
-    subset = dataset[random_indices]
-
-    return subset
 def calc_perf_improv_rates(confs: list[Configuration], fid_budgets: dict) -> dict:
     perf_improv_rates = dict()
     for fidelity, budgets in fid_budgets.items():
@@ -432,13 +417,12 @@ def calc_spearman_correlation(confs: list[Configuration], seed: int, fidelity_bu
 
     for fidelity, budgets in fidelity_budgets.items():
         print(f"fidelity: {fidelity}: eval confs with {budgets[0]} budget")
-        eval_cheaps = [cnn_from_cfg_general(conf, seed, (fidelity, budgets[0])) for conf in confs]
+        eval_cheaps = [cnn_from_cfg(conf, seed, fidelity, budgets[0]) for conf in confs]
         print(f"fidelity: {fidelity}: eval confs with {budgets[1]} budget ")
-        eval_exp = [cnn_from_cfg_general(conf, seed, (fidelity, budgets[1])) for conf in confs]
+        eval_exp = [cnn_from_cfg(conf, seed, fidelity, budgets[1]) for conf in confs]
         sp_correlations.update({fidelity: spearmanr(eval_cheaps, eval_exp)})
 
     return sp_correlations
-
 
 if __name__ == "__main__":
     """
@@ -510,10 +494,10 @@ if __name__ == "__main__":
             "INFO",
             "DEBUG",
         ],
-        default="CRITICAL",
+        default="INFO",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="minimal_configspace.json", # previous default
+    parser.add_argument('--configspace', type=Path, default="default_configspace_edit.json", # previous default
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
@@ -530,20 +514,21 @@ if __name__ == "__main__":
     )
 
     print('determine the best fidelity based on rank correlation')
-
-    sample_configs = configspace.sample_configuration(2)
-    print(sample_configs)
-    fidelity_budgets = {'img_size': (8, 16), 'epochs': (5, 10)}#, 'cv_splits': (1, 2), 'sampling_ratio': (10, 100)}
+    start = time.time()
+    sample_configs = configspace.sample_configuration(5)
+    fidelity_budgets = {'img_size': (8, 16), 'epochs': (5, 10), 'cv_splits': (2, 3), 'sampling_ratio': (20, 100)}
     sp_rank_corr = calc_spearman_correlation(sample_configs, args.seed, fidelity_budgets)
     print(sp_rank_corr)
-    significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}# if v.pvalue < 0.05}
+    significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}  # if v.pvalue < 0.05}
     sorted_sp_corr = dict(sorted(significant_sp_corr.items(), key=lambda item: item[1].statistic))
     best_fidelity = list(sorted_sp_corr.items())[-1]  # yields the fidelity with the highest spearman rank correlation
-
+    print(sorted_sp_corr)
     print(f"The best fidelity based on the spearman rank correlation is the fidelity {best_fidelity[0]}"
           f" with a spr of {best_fidelity[1]}")
+    end = time.time()
+    print("Time for determining the best fidelity", end - start)
 
-    """
+
     print('running main function, config space: ', configspace)
 
     # Setting up SMAC to run BOHB
@@ -554,8 +539,8 @@ if __name__ == "__main__":
         output_directory=args.working_dir,
         seed=args.seed,
         n_trials=args.n_trials,
-        max_budget=args.max_budget,
-        min_budget=args.min_budget,
+        max_budget=fidelity_budgets[best_fidelity[0]][1],
+        min_budget=fidelity_budgets[best_fidelity[0]][0],
         n_workers=args.workers,
         walltime_limit=args.runtime
     )
@@ -564,9 +549,9 @@ if __name__ == "__main__":
 
     # You can mess with SMACs own hyperparameters here (checkout the documentation at https://automl.github.io/SMAC3)
     smac = SMAC4MF(
-        target_function=cnn_from_cfg,
+        target_function=partial(cnn_from_cfg, fidelity=best_fidelity[0]),
         scenario=scenario,
-        initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=5),
+        initial_design=SMAC4MF.get_initial_design(scenario=scenario, n_configs=2),
         intensifier=Hyperband(
             scenario=scenario,
             incumbent_selection="highest_budget",
@@ -579,7 +564,6 @@ if __name__ == "__main__":
     print('running main function, smac created: ', smac)
 
     # Start optimization
-    #incumbent = smac.optimize()
+    incumbent = smac.optimize()
 
-    #print('running main function, incumbent finished: ', incumbent)
- """
+    print('running main function, incumbent finished: ', incumbent)
