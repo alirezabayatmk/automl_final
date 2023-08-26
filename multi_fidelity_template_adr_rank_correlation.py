@@ -153,6 +153,7 @@ def get_optimizer_and_criterion(
 def cnn_from_cfg(
         cfg: Configuration,
         seed: int,
+        fidelity: str,
         budget: float,
 ) -> float:
     """
@@ -187,10 +188,14 @@ def cnn_from_cfg(
     batch_size = cfg["batch_size"]
     ds_path = cfg["datasetpath"]
 
+    # set fidelities and budgets
+
+    img_size = np.floor(budget) if fidelity == "img_size" else 32
+    epochs = np.floor(budget) if fidelity == "epochs" else 20
+
+
     print('cnn_from_cfg function finished: ', lr, dataset, device, batch_size, ds_path)
 
-    # unchangeable constants that need to be adhered to, the maximum fidelities
-    img_size = max(8, int(np.floor(budget)))  # example fidelity to use
 
     # Device configuration
     torch.manual_seed(seed)
@@ -244,7 +249,7 @@ def cnn_from_cfg(
         optimizer = model_optimizer(model.parameters(), lr=lr)
         train_criterion = train_criterion().to(device)
 
-        for epoch in range(20):  # 20 epochs
+        for epoch in range(epochs):  # 20 epochs
             print('epoch: ', epoch)
             logging.info(f"Worker:{worker_id} " + "#" * 50)
             logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
@@ -269,122 +274,6 @@ def cnn_from_cfg(
     results = val_error
     return results
 
-
-def cnn_from_cfg(
-        cfg: Configuration,
-        seed: int,
-        fidelity: str,
-        budget: float,
-) -> float:
-    """
-    Creates an instance of the torch_model and fits the given data on it.
-    This is the function-call we try to optimize. Chosen values are stored in
-    the configuration (cfg).
-
-    :param cfg: Configuration (basically a dictionary)
-        configuration chosen by smac
-    :param seed: int or RandomState
-        used to initialize the rf's random generator
-    :param budget: float
-        used to set max iterations for the MLP
-    Returns
-    -------
-    val_accuracy cross validation accuracy
-    """
-    try:
-        worker_id = get_worker().name
-    except ValueError:
-        worker_id = 0
-
-    # If data already existing on disk, set to False
-    download = False
-
-    lr = cfg["learning_rate_init"]
-    dataset = cfg["dataset"]
-    device = cfg["device"]
-    batch_size = cfg["batch_size"]
-    ds_path = cfg["datasetpath"]
-
-    # determine fidelity and used budget
-    cv_splits = int(np.floor(budget)) if fidelity == "cv_splits" else 3
-    img_size = int(np.floor(budget)) if fidelity == "img_size" else 32
-    epochs = int(np.floor(budget)) if fidelity == "epochs" else 20
-    sampling_ratio =  int(np.floor(budget)) if fidelity == "epochs" else 100
-
-    # Device configuration
-    torch.manual_seed(seed)
-    model_device = torch.device(device)
-
-    if "fashion_mnist" in dataset:
-        input_shape, train_val, _ = load_fashion_mnist(datadir=Path(ds_path, "FashionMNIST"))
-    elif "deepweedsx" in dataset:
-        input_shape, train_val, _ = load_deep_woods(
-            datadir=Path(ds_path, "deepweedsx"),
-            resize=(img_size, img_size),
-            balanced="balanced" in dataset,
-            download=download,
-        )
-    else:
-        raise NotImplementedError
-
-    if fidelity == "sampling_ratio":
-        indices = [np.random.choice(len(train_val), int(len(train_val) * sampling_ratio/100), replace=False)]
-        train_val = Subset(train_val, indices)
-
-    # returns the cross-validation accuracy
-    # to make CV splits consistent
-    cv = StratifiedKFold(n_splits=cv_splits, random_state=CV_SPLIT_SEED, shuffle=True)
-
-    score = []
-    cv_splits = cv.split(train_val, train_val.targets)
-    for cv_index, (train_idx, valid_idx) in enumerate(cv_splits, start=1):
-        logging.info(f"Worker:{worker_id} ------------ CV {cv_index} -----------")
-        train_data = Subset(train_val, list(train_idx))
-        val_data = Subset(train_val, list(valid_idx))
-
-        train_loader = DataLoader(
-            dataset=train_data,
-            batch_size=batch_size,
-            shuffle=True,
-        )
-        val_loader = DataLoader(
-            dataset=val_data,
-            batch_size=batch_size,
-            shuffle=False,
-        )
-
-        model = Model(
-            config=cfg,
-            input_shape=input_shape,
-            num_classes=len(train_val.classes),
-        )
-        model = model.to(model_device)
-
-        # summary(model, input_shape, device=device)
-
-        model_optimizer, train_criterion = get_optimizer_and_criterion(cfg)
-        optimizer = model_optimizer(model.parameters(), lr=lr)
-        train_criterion = train_criterion().to(device)
-
-        for epoch in range(epochs):  # 20 epochs
-            logging.info(f"Worker:{worker_id} " + "#" * 50)
-            logging.info(f"Worker:{worker_id} Epoch [{epoch + 1}/{20}]")
-            train_score, train_loss = model.train_fn(
-                optimizer=optimizer,
-                criterion=train_criterion,
-                loader=train_loader,
-                device=model_device
-            )
-            logging.info(f"Worker:{worker_id} => Train accuracy {train_score:.3f} | loss {train_loss}")
-
-        val_score = model.eval_fn(val_loader, device)
-        logging.info(f"Worker:{worker_id} => Val accuracy {val_score:.3f}")
-        score.append(val_score)
-
-    val_error = 1 - np.mean(score)  # because minimize
-
-    results = val_error
-    return results
 
 def calc_perf_improv_rates(confs: list[Configuration], fid_budgets: dict) -> dict:
     perf_improv_rates = dict()
@@ -497,7 +386,7 @@ if __name__ == "__main__":
         default="INFO",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="minimal_configspace.json", # previous default
+    parser.add_argument('--configspace', type=Path, default="default_configspace.json", # previous default
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
@@ -513,10 +402,18 @@ if __name__ == "__main__":
         cs_file=args.configspace
     )
 
+    minimal_configspace = configuration_space(
+        device=args.device,
+        dataset=args.dataset,
+        cv_count=args.cv_count,
+        datasetpath=args.datasetpath,
+        cs_file="minimal_configspace.json"
+    )
+
     print('determine the best fidelity based on rank correlation')
     start = time.time()
-    sample_configs = configspace.sample_configuration(20)
-    fidelity_budgets = {'img_size': (8, 16), 'epochs': (5, 10)}
+    sample_configs = minimal_configspace.sample_configuration(20)
+    fidelity_budgets = {'img_size': (8, 32), 'epochs': (5, 20)}
     sp_rank_corr = calc_spearman_correlation(sample_configs, args.seed, fidelity_budgets)
     print(sp_rank_corr)
     significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}  # if v.pvalue < 0.05}
