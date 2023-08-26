@@ -407,7 +407,7 @@ if __name__ == "__main__":
         dataset=args.dataset,
         cv_count=args.cv_count,
         datasetpath=args.datasetpath,
-        cs_file="minimal_configspace.json"
+        cs_file="minimal_configspace"
     )
 
     print('determine the best fidelity based on rank correlation')
