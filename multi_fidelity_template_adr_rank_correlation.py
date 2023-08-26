@@ -328,7 +328,7 @@ def cnn_from_cfg(
         raise NotImplementedError
 
     if fidelity == "sampling_ratio":
-        indices = [np.random.choice(len(train_val), int(len(train_val) * sampling_ratio), replace=False)]
+        indices = [np.random.choice(len(train_val), int(len(train_val) * sampling_ratio/100), replace=False)]
         train_val = Subset(train_val, indices)
 
     # returns the cross-validation accuracy
@@ -497,7 +497,7 @@ if __name__ == "__main__":
         default="INFO",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="default_configspace_edit.json", # previous default
+    parser.add_argument('--configspace', type=Path, default="constant_configspace.json", # previous default
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
