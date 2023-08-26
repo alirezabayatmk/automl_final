@@ -497,7 +497,7 @@ if __name__ == "__main__":
         default="INFO",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="constant_configspace.json", # previous default
+    parser.add_argument('--configspace', type=Path, default="minimal_configspace.json", # previous default
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
@@ -515,8 +515,8 @@ if __name__ == "__main__":
 
     print('determine the best fidelity based on rank correlation')
     start = time.time()
-    sample_configs = configspace.sample_configuration(5)
-    fidelity_budgets = {'sampling_ratio': (20, 100)} #{'img_size': (8, 16), 'epochs': (5, 10), 'cv_splits': (2, 3),
+    sample_configs = configspace.sample_configuration(20)
+    fidelity_budgets = {'img_size': (8, 16), 'epochs': (5, 10)}
     sp_rank_corr = calc_spearman_correlation(sample_configs, args.seed, fidelity_budgets)
     print(sp_rank_corr)
     significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}  # if v.pvalue < 0.05}
