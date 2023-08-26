@@ -197,7 +197,7 @@ def cnn_from_cfg_epoch(
 
     # returns the cross-validation accuracy
     # to make CV splits consistent
-    cv = StratifiedKFold(n_splits=fidelity_budget[1] if fidelity_budget[0] == 'cv_splits' else 2
+    cv = StratifiedKFold(n_splits=2#fidelity_budget[1] if fidelity_budget[0] == 'cv_splits' else 2
                          , random_state=CV_SPLIT_SEED, shuffle=True)
     """if fidelity_budget[0] == 'sampling_ratio':
         #indices = [np.random.choice(len(train_val), int(len(train_val) * fidelity_budget[1]), replace=False)]
@@ -624,7 +624,7 @@ if __name__ == "__main__":
     significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}# if v.pvalue < 0.05}
     sorted_sp_corr = dict(sorted(significant_sp_corr.items(), key=lambda item: item[1].statistic))
     best_fidelity = list(sorted_sp_corr.items())[-1]  # yields the fidelity with the highest spearman rank correlation
-
+    print(sorted_sp_corr)
     print(f"The best fidelity based on the spearman rank correlation is the fidelity {best_fidelity[0]}"
           f" with a spr of {best_fidelity[1]}")
     end = time.time()
