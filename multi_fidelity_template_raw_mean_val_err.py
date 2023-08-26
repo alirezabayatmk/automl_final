@@ -177,8 +177,8 @@ def cnn_from_cfg(
     ds_path = cfg["datasetpath"]
 
     # determine fidelity and used budget
-    img_size = int(np.floor(budget)) if fidelity == "img_size" else 32
-    epochs = int(np.floor(budget)) if fidelity == "epochs" else 20
+    img_size = int(np.floor(budget)) if fidelity == "img_size" else 16
+    epochs = int(np.floor(budget)) if fidelity == "epochs" else 10
 
     # Device configuration
     torch.manual_seed(seed)
