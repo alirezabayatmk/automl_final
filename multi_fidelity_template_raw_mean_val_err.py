@@ -371,42 +371,41 @@ def cnn_from_cfg_test(
     return test_score
 
 
-def plot_trajectory(facades_list: list[list[AbstractFacade]], budget_types: list[str]) -> None:
+def plot_trajectory(results_per_seed: dict) -> None:
     plt.figure()
     plt.title("Trajectory")
     plt.xlabel("Wallclock time [s]")
-    plt.ylabel(facades_list[0][0].scenario.objectives)   # cost
-    plt.ylim(0.2, 0.8)
+    plt.ylabel(next(iter(results_per_seed.values())).scenario.objectives)  # cost
+    plt.ylim(0.3, 0.8)
 
-    for facades, budget_type in zip(facades_list, budget_types):
-        logging.info(f"facades {facades} and budget type {budget_type}")
-        for seed, facade in enumerate(facades):
-            X, Y = [], []
-            for item in facade.intensifier.trajectory:
-                # Single-objective optimization
-                assert len(item.config_ids) == 1
-                assert len(item.costs) == 1
+    for (seed, budget_type), facade in results_per_seed.items():
+        logging.info(f"facades {seed} and budget type {budget_type}")
+        X, Y = [], []
+        for item in facade.intensifier.trajectory:
+            # Single-objective optimization
+            assert len(item.config_ids) == 1
+            assert len(item.costs) == 1
 
-                y = item.costs[0]
-                x = item.walltime
+            y = item.costs[0]
+            x = item.walltime
 
-                X.append(x)
-                Y.append(y)
+            X.append(x)
+            Y.append(y)
 
-            plt.plot(X, Y, label=f"{budget_type} - Seed {seed}")  # Include seed in label
-            plt.scatter(X, Y, marker="x")
+        plt.plot(X, Y, label=f"{budget_type} - Seed {seed}")  # Include seed in label
+        plt.scatter(X, Y, marker="x")
 
     plt.legend()
     plt.show()
 
 
 def train_mf_selection(cs: ConfigurationSpace) -> None:
-    facades_list = []
+    results_per_seed = {}
     fidelity_budgets = {'img_size': (8, 16), 'epochs': (5, 10)}
 
-    for fidelity, budgets in fidelity_budgets.items():
-        facades = []  # facades[0] = smac with seed 0, facades[1] = smac with seed 1
-        for seed in range(1):  # Run 5 times with different seeds
+    for seed in range(2):
+        for fidelity, budgets in fidelity_budgets.items():
+          # Run 5 times with different seeds
             logging.info(f"Budget type: {fidelity} - Seed: {seed}")
 
             scenario = Scenario(
@@ -436,19 +435,18 @@ def train_mf_selection(cs: ConfigurationSpace) -> None:
             )
 
             smac.optimize()
-            facades.append(smac)
+            results_per_seed[(seed, fidelity)] = smac
 
-        facades_list.append(facades)  # facades[0] = [facade[0], facade[1] first fidelity run with 2 seeds
 
-    logging.info(facades_list)
-    plot_trajectory(facades_list, list(fidelity_budgets.keys()))
+    plot_trajectory(results_per_seed)
     # get_best_fidelity(facades_list, list(fidelity_budgets.keys()))
     return
 
 
-def get_best_fidelity(facades_list, budget_types):
-    for seed, facades in enumerate(facades_list):
-        for facade, budget_type in zip(facades, budget_types):
+def get_best_fidelity(facades_list: list[list[AbstractFacade]], budget_types: list[str]) -> str:
+    for facades, budget_type in zip(facades_list, budget_types):
+        logging.info(f"facades {facades} and budget type {budget_type}")
+        for seed, facade in enumerate(facades):
             X, Y = [], []
             for item in facade.intensifier.trajectory:
                 # Single-objective optimization
@@ -461,6 +459,10 @@ def get_best_fidelity(facades_list, budget_types):
                 X.append(x)
                 Y.append(y)
 
+
+
+
+    return best_fidelity
 
 if __name__ == "__main__":
     """

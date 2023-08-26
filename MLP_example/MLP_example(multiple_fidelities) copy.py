@@ -18,8 +18,15 @@ from smac import Scenario
 from smac.facade import AbstractFacade
 from smac.intensifier.hyperband import Hyperband
 from functools import partial
+import logging
+
+# Disable error logs for scikit-learn
+logging.getLogger("sklearn").setLevel(logging.ERROR)
+
 
 dataset = load_digits()
+
+
 
 def random_subset(dataset, sampling_ratio):
     if sampling_ratio < 0 or sampling_ratio > 100:
@@ -110,15 +117,37 @@ def optimize_for_budget_type(smac, budget_type):
 
     return incumbent
 
-def plot_trajectory(facades_list, budget_types):
+def plot_trajectory(results_per_seed):
     plt.figure()
     plt.title("Trajectory")
     plt.xlabel("Wallclock time [s]")
-    plt.ylabel(facades_list[0][0].scenario.objectives)
+    plt.ylabel(next(iter(results_per_seed.values())).scenario.objectives)
     plt.ylim(0, 0.4)
 
-    for seed, facades in enumerate(facades_list):
-        for facade, budget_type in zip(facades, budget_types):
+    for (seed, budget_type), facade in results_per_seed.items():
+        X, Y = [], []
+        for item in facade.intensifier.trajectory:
+            # Single-objective optimization
+            assert len(item.config_ids) == 1
+            assert len(item.costs) == 1
+
+            y = item.costs[0]
+            x = item.walltime
+
+            X.append(x)
+            Y.append(y)
+
+        plt.plot(X, Y, label=f"{budget_type} - Seed {seed}")  # Include seed in label
+        plt.scatter(X, Y, marker="x")
+
+    plt.legend()
+    plt.show()
+
+def get_best_fidelity(results_per_seed) -> str:
+    fidelity_scors = dict()
+    for facades, budget_type in zip(facades_list, budget_types):
+        logging.info(f"facades {facades} and budget type {budget_type}")
+        for seed, facade in enumerate(facades):
             X, Y = [], []
             for item in facade.intensifier.trajectory:
                 # Single-objective optimization
@@ -130,33 +159,28 @@ def plot_trajectory(facades_list, budget_types):
 
                 X.append(x)
                 Y.append(y)
-
-            plt.plot(X, Y, label=f"{budget_type} - Seed {seed}")  # Include seed in label
-            plt.scatter(X, Y, marker="x")
-
-    plt.legend()
-    plt.show()
+    return best_fidelity
 
 if __name__ == "__main__":
     mlp = MLP()
 
-    facades_list = []
     intensifier_object = Hyperband
-    budget_types = ["epoch", "cv_splits", "sampling_ratio"]
-    mins_and_maxs = [(5, 25), (3, 10), (20, 100)]
-
-    for budget_type, (min_budget, max_budget) in zip(budget_types, mins_and_maxs):
-        facades = []
-        for seed in range(2):  # Run 5 times with different seeds
+    budget_types = ["epoch", "sampling_ratio"]
+    mins_and_maxs = [(5, 25), (20, 100)]
+    results_per_seed = {}
+    for seed in range(2):
+        for budget_type, (min_budget, max_budget) in zip(budget_types, mins_and_maxs):
+            facades = []
+            # Run 5 times with different seeds
             print(f"Budget type: {budget_type} - Seed: {seed}")
-        
+
             scenario = Scenario(
                 mlp.configspace,
-                walltime_limit=50,
-                n_trials=50,
+                walltime_limit=100,
+                n_trials=100,
                 min_budget=min_budget,
                 max_budget=max_budget,
-                n_workers=16,
+                n_workers=8,
                 seed=seed,  # Use a different seed for each run
                 name=f"MLPRunBudget({budget_type}_Seed{seed})"
             )
@@ -173,10 +197,11 @@ if __name__ == "__main__":
             )
 
             optimize_for_budget_type(smac, budget_type)
-            facades.append(smac)
+            results_per_seed[(seed, budget_type)] = smac
 
-        facades_list.append(facades)
 
-    plot_trajectory(facades_list, budget_types)
+
+
+    plot_trajectory(results_per_seed)
 
     print('#' * 50)
