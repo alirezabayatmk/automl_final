@@ -23,10 +23,10 @@
     {
       "name": "batch_size",
       "type": "uniform_int",
-      "log": false,
-      "lower": 15,
-      "upper": 64,
-      "default": 32
+      "log": true,
+      "lower": 1,
+      "upper": 500,
+      "default": 100
     },
     {
       "name": "learning_rate_init",
@@ -60,7 +60,7 @@
       "name": "n_channels_conv_0",
       "type": "uniform_int",
       "log": true,
-      "lower": 32,
+      "lower": 128,
       "upper": 256,
       "default": 256
     },
@@ -68,17 +68,9 @@
       "name": "n_channels_conv_1",
       "type": "uniform_int",
       "log": true,
-      "lower": 16,
+      "lower": 128,
       "upper": 256,
       "default": 256
-    },
-    {
-      "name": "n_channels_conv_2",
-      "type": "uniform_int",
-      "log": true,
-      "lower": 16,
-      "upper": 128,
-      "default": 128
     },
     {
       "name": "n_fc_layers",
@@ -93,24 +85,16 @@
       "type": "uniform_int",
       "log": true,
       "lower": 32,
-      "upper": 64,
-      "default": 64
+      "upper": 128,
+      "default": 128
     },
     {
       "name": "n_channels_fc_1",
       "type": "uniform_int",
       "log": true,
       "lower": 16,
-      "upper": 64,
-      "default": 64
-    },
-    {
-      "name": "n_channels_fc_2",
-      "type": "uniform_int",
-      "log": true,
-      "lower": 16,
-      "upper": 64,
-      "default": 64
+      "upper": 128,
+      "default": 128
     },
     {
       "name": "optimizer",
@@ -133,23 +117,7 @@
       ]
     },
     {
-      "child": "n_channels_conv_2",
-      "parent": "n_conv_layers",
-      "type": "IN",
-      "values": [
-        2
-      ]
-    },
-    {
       "child": "n_channels_fc_1",
-      "parent": "n_fc_layers",
-      "type": "IN",
-      "values": [
-        2
-      ]
-    },
-    {
-      "child": "n_channels_fc_2",
       "parent": "n_fc_layers",
       "type": "IN",
       "values": [

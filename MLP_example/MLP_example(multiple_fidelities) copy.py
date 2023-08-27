@@ -1,4 +1,7 @@
+import math
 import warnings
+from collections import defaultdict
+
 import matplotlib.pyplot as plt
 import numpy as np
 from ConfigSpace import (
@@ -117,12 +120,12 @@ def optimize_for_budget_type(smac, budget_type):
 
     return incumbent
 
-def plot_trajectory(results_per_seed):
+def plot_trajectory(results_per_seed: dict):
     plt.figure()
     plt.title("Trajectory")
     plt.xlabel("Wallclock time [s]")
     plt.ylabel(next(iter(results_per_seed.values())).scenario.objectives)
-    plt.ylim(0, 0.4)
+    plt.ylim(0, 1)
 
     for (seed, budget_type), facade in results_per_seed.items():
         X, Y = [], []
@@ -143,23 +146,45 @@ def plot_trajectory(results_per_seed):
     plt.legend()
     plt.show()
 
-def get_best_fidelity(results_per_seed) -> str:
-    fidelity_scors = dict()
-    for facades, budget_type in zip(facades_list, budget_types):
-        logging.info(f"facades {facades} and budget type {budget_type}")
-        for seed, facade in enumerate(facades):
-            X, Y = [], []
-            for item in facade.intensifier.trajectory:
-                # Single-objective optimization
-                assert len(item.config_ids) == 1
-                assert len(item.costs) == 1
+def get_best_fidelity(results_per_seed: dict) -> str:
+    seperate_run_scores = {}
+    for (seed, budget_type), facade in results_per_seed.items():
+        X, Y = [], []
+        for item in facade.intensifier.trajectory:
+            # Single-objective optimization
+            assert len(item.config_ids) == 1
+            assert len(item.costs) == 1
 
-                y = item.costs[0]
-                x = item.walltime
+            y = item.costs[0]
+            x = item.walltime
 
-                X.append(x)
-                Y.append(y)
-    return best_fidelity
+            X.append(x)
+            Y.append(y)
+            print(f"Y: {Y}, cost items for seed {seed} and budget {budget_type}")
+        seperate_run_scores[(seed, budget_type)] = (np.mean(X), np.mean(Y))  # calc the mean cost and mean walltime for each seed and budget
+
+    # avg results per seed
+    # Initialize a defaultdict to store scores per seed and hyperparameter
+    scores_per_seed_hyperparam = defaultdict(list)
+
+    # Iterate through the input dictionary and group scores by seed and hyperparameter
+    for (seed, hyperparam), (mean_x, mean_y) in seperate_run_scores.items():
+        scores_per_seed_hyperparam[hyperparam].append((mean_x, mean_y))
+
+
+
+    avg_dist_per_fidelity = {}
+
+    # avg the results of the seeds per fidelity and calc the distance of the mean scores per fidelity to the origin
+    for fidelity, tuples_list in scores_per_seed_hyperparam.items():
+        avg_x = np.mean([t[0] for t in tuples_list])
+        avg_y = np.mean([t[1] for t in tuples_list])
+        avg_dist_per_fidelity[fidelity] = math.sqrt(avg_x**2 + avg_y**2)
+
+    print("avg_dist_per_fidelity", avg_dist_per_fidelity)
+
+    min_distance_fidelity = min(avg_dist_per_fidelity, key=avg_dist_per_fidelity.get)
+    return min_distance_fidelity
 
 if __name__ == "__main__":
     mlp = MLP()
@@ -200,8 +225,12 @@ if __name__ == "__main__":
             results_per_seed[(seed, budget_type)] = smac
 
 
+    logging.info(results_per_seed)
+    #plot_trajectory(results_per_seed)
 
+    print('#' * 50)
 
-    plot_trajectory(results_per_seed)
+    best_fidelity = get_best_fidelity(results_per_seed)
+    print("best fidelity: ", best_fidelity)
 
     print('#' * 50)
