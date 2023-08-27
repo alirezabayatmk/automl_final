@@ -10,3 +10,5 @@ pandas
 thop
 protobuf==3.9.2
 optuna
+plotly
+kaleido
