@@ -443,7 +443,8 @@ def plot_seeds_trajectory(results_per_seed: dict) -> None:
 
             X.append(x)
             Y.append(y)
-
+        logging.info(f"Walltimes of {budget_type} and {seed}: {X}")
+        logging.info(f"Costs of {budget_type} and {seed}: {Y}")
         plt.plot(X, Y, label=f"{budget_type} - Seed {seed}")  # Include seed in label
         plt.scatter(X, Y, marker="x")
 
