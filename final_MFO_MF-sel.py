@@ -8,13 +8,13 @@ from pathlib import Path
 from typing import Any, Mapping, Optional
 from functools import partial
 import time
-import json 
+import json
 import os
 
 import numpy as np
 import matplotlib.pyplot as plt
 import torch
-import optuna 
+import optuna
 
 from ConfigSpace import (
     Configuration,
@@ -27,6 +27,7 @@ from ConfigSpace import (
 )
 from ConfigSpace.read_and_write import json as cs_json
 from ConfigSpace.read_and_write import pcs_new, pcs
+from scipy.stats import spearmanr
 
 from sklearn.model_selection import StratifiedKFold
 from smac.facade.multi_fidelity_facade import MultiFidelityFacade as SMAC4MF
@@ -43,6 +44,7 @@ from datasets import load_deep_woods, load_fashion_mnist
 logger = logging.getLogger(__name__)
 
 CV_SPLIT_SEED = 42
+
 
 def configuration_space(
         device: str,
@@ -85,7 +87,7 @@ def configuration_space(
         use_fc_layer_1 = InCondition(cs["n_channels_fc_1"], cs["n_fc_layers"], [2, 3])
 
         cs.add_conditions([use_conv_layer_2, use_conv_layer_1, use_fc_layer_2, use_fc_layer_1])
-    
+
     else:
         with open(cs_file, "r") as fh:
             cs_string = fh.read()
@@ -165,8 +167,6 @@ def cnn_from_cfg(
     ds_path = cfg["datasetpath"]
 
     # determine fidelity and used budget
-    img_size = int(np.floor(budget)) if fidelity == "img_size" else 32
-    epochs = int(np.floor(budget)) if fidelity == "epochs" else 20
 
     # Device configuration
     torch.manual_seed(seed)
@@ -238,6 +238,7 @@ def cnn_from_cfg(
 
     results = val_error
     return results
+
 
 def cnn_from_cfg_mf(
         cfg: Configuration,
@@ -349,6 +350,7 @@ def cnn_from_cfg_mf(
     results = val_error
     return results
 
+
 def optimize_smac_hyperparameters(trial):
     # Optimize parameters of the random forest model
     n_trees = trial.suggest_int("n_trees", 10, 25)
@@ -420,6 +422,7 @@ def plot_optuna_trajectories(dictionary):
     plt.show()
     plt.savefig(f"visualizations/trajectory_optuna.png")
 
+
 def plot_seeds_trajectory(results_per_seed: dict) -> None:
     plt.figure()
     plt.title("Trajectory")
@@ -447,13 +450,13 @@ def plot_seeds_trajectory(results_per_seed: dict) -> None:
     plt.legend()
     plt.savefig('visualizations/trajectory_seeds.png')
 
-def train_mf_selection(cs: ConfigurationSpace) -> None:
+
+def train_mf_selection(cs: ConfigurationSpace) -> str:
     results_per_seed = {}
     fidelity_budgets = {'img_size': (8, 16), 'epochs': (5, 10)}
 
     for seed in range(2):
         for fidelity, budgets in fidelity_budgets.items():
-
             logging.info(f"Budget type: {fidelity} - Seed: {seed}")
 
             scenario = Scenario(
@@ -485,7 +488,6 @@ def train_mf_selection(cs: ConfigurationSpace) -> None:
             smac.optimize()
             results_per_seed[(seed, fidelity)] = smac
 
-
     plot_seeds_trajectory(results_per_seed)
     best_fidelity = get_best_fidelity(results_per_seed)
     return best_fidelity
@@ -505,7 +507,8 @@ def get_best_fidelity(results_per_seed: dict) -> str:
 
             X.append(x)
             Y.append(y)
-        seperate_run_scores[(seed, budget_type)] = (np.mean(X), np.mean(Y))  # calc the mean walltime and mean cost for each seed and budget
+        seperate_run_scores[(seed, budget_type)] = (
+        np.mean(X), np.mean(Y))  # calc the mean walltime and mean cost for each seed and budget
     logging.info(seperate_run_scores)
 
     # avg results per seed
@@ -522,10 +525,30 @@ def get_best_fidelity(results_per_seed: dict) -> str:
     for fidelity, tuples_list in scores_per_seed_fidelity.items():
         avg_x = np.mean([t[0] for t in tuples_list])
         avg_y = np.mean([t[1] for t in tuples_list])
-        avg_dist_per_fidelity[fidelity] = math.sqrt(avg_x**2 + avg_y**2)
+        avg_dist_per_fidelity[fidelity] = math.sqrt(avg_x ** 2 + avg_y ** 2)
 
     min_distance_fidelity = min(avg_dist_per_fidelity, key=avg_dist_per_fidelity.get)
     return min_distance_fidelity
+
+
+def calc_spearman_correlation(confs: list[Configuration], seed: int, fidelity_budgets: dict) -> float:
+    sp_correlations = dict()
+
+    for fidelity, budgets in fidelity_budgets.items():
+        print(f"fidelity: {fidelity}: eval confs with {budgets[0]} budget")
+        start = time.time()
+        eval_cheaps = [cnn_from_cfg_mf(conf, seed, fidelity, budgets[0]) for conf in confs]
+        end = time.time()
+        logging.info("time for 10 cheap evals (img_size 8/epochs 5) for minimal configspace", end - start)
+        print(f"fidelity: {fidelity}: eval confs with {budgets[1]} budget ")
+        start = time.time()
+        eval_exp = [cnn_from_cfg_mf(conf, seed, fidelity, budgets[1]) for conf in confs]
+        end = time.time()
+        logging.info("time for 10 medium exp evals (img_size 16/epochs 10) for minimal configspace", end - start)
+        sp_correlations.update({fidelity: spearmanr(eval_cheaps, eval_exp)})
+
+    return sp_correlations
+
 
 def final_training(
         cfg: Configuration,
@@ -645,13 +668,12 @@ def final_training(
 
     return test_score
 
-if __name__ == "__main__":
 
+if __name__ == "__main__":
 
     #################################################################################################################
     #                                           Setting up the arguments                                            #
     #################################################################################################################
-
 
     parser = argparse.ArgumentParser(description="MF example using BOHB.")
     parser.add_argument(
@@ -718,8 +740,20 @@ if __name__ == "__main__":
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
+
+    parser.add_argument(
+        "--mf_selection",
+        choices=[
+            "TRAJECTORY_DIST",
+            "SPR_CORRELATION"
+        ],
+        default="TRAJECTORY_DIST",  # spearman rank requires sufficient amount of configs
+        # for evaluation to be statistically signifcant which can be computationally expensive
+        help="choice of the method to determine the best fidelity",
+    )
+
     args = parser.parse_args()
-    
+
     logging.basicConfig(level=args.log_level)
 
     configspace = configuration_space(
@@ -737,7 +771,6 @@ if __name__ == "__main__":
     #                                 Plot Multi-fidelity plot                                                      #
     #################################################################################################################
 
-
     minimal_configspace = configuration_space(
         device=args.device,
         dataset=args.dataset,
@@ -748,8 +781,19 @@ if __name__ == "__main__":
 
     start_time = time.time()
 
-    best_fidelity = train_mf_selection(minimal_configspace)
-
+    if args.mf_selection == "SPR_CORRELATION":
+        sample_configs = minimal_configspace.sample_configuration(10)
+        fidelity_budgets = {'img_size': (8, 16), 'epochs': (5, 10)}
+        sp_rank_corr = calc_spearman_correlation(sample_configs, args.seed, fidelity_budgets)
+        significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}# if v.pvalue < 0.05}
+        sorted_sp_corr = dict(sorted(significant_sp_corr.items(), key=lambda item: item[1].statistic))
+        best_fidelity = list(sorted_sp_corr.items())[
+            1]  # yields the fidelity with the highest spearman rank correlation
+        logging.info(f"The best fidelity based on the spearman rank correlation is the fidelity {best_fidelity[0]}"
+                     f" with a spr of {best_fidelity[1]}")
+    else:
+        best_fidelity = train_mf_selection(minimal_configspace)
+        logging.info(f"The best fidelity due to the trajectory on reduced parameters is the fidelity {best_fidelity}")
 
     print("--- Multi-fidelity selection took: %s seconds ---" % (time.time() - start_time))
     """
