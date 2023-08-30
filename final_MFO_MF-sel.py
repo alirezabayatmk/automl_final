@@ -462,13 +462,13 @@ def train_mf_selection(cs: ConfigurationSpace) -> str:
 
             scenario = Scenario(
                 configspace=cs,
-                walltime_limit=360,
+                walltime_limit=500,
                 n_trials=100,
-                deterministic=True,
+                deterministic=False,
                 output_directory=Path("./tmp"),
                 min_budget=budgets[0],
                 max_budget=budgets[1],
-                n_workers=10,
+                n_workers=12,
                 seed=seed,  # Use a different seed for each run
                 name=f"MFO({fidelity}_Seed{seed})"
             )
@@ -788,6 +788,7 @@ if __name__ == "__main__":
         sp_rank_corr = calc_spearman_correlation(sample_configs, args.seed, fidelity_budgets)
         significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}# if v.pvalue < 0.05}
         sorted_sp_corr = dict(sorted(significant_sp_corr.items(), key=lambda item: item[1].statistic))
+        logging.info("spearman ranks", sp_rank_corr)
         best_fidelity = list(sorted_sp_corr.items())[
             1]  # yields the fidelity with the highest spearman rank correlation
         logging.info(f"The best fidelity based on the spearman rank correlation is the fidelity {best_fidelity[0]}"
