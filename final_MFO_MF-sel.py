@@ -788,7 +788,7 @@ if __name__ == "__main__":
         sp_rank_corr = calc_spearman_correlation(sample_configs, args.seed, fidelity_budgets)
         significant_sp_corr = {k: v for k, v in sp_rank_corr.items()}# if v.pvalue < 0.05}
         sorted_sp_corr = dict(sorted(significant_sp_corr.items(), key=lambda item: item[1].statistic))
-        logging.info("spearman ranks", sp_rank_corr)
+        logging.info(f"spearman ranks {sp_rank_corr}")
         best_fidelity = list(sorted_sp_corr.items())[
             1]  # yields the fidelity with the highest spearman rank correlation
         logging.info(f"The best fidelity based on the spearman rank correlation is the fidelity {best_fidelity[0]}"
