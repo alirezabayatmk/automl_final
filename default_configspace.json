@@ -33,7 +33,7 @@
       "type": "uniform_float",
       "log": true,
       "lower": 1e-05,
-      "upper": 1e-02,
+      "upper": 1,
       "default": 1e-03
     },
     {
