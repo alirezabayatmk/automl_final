@@ -391,7 +391,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--runtime",
-        default=21600,
+        default=20000,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -437,7 +437,7 @@ if __name__ == "__main__":
         default="INFO",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="joint_configspace.json",
+    parser.add_argument('--configspace', type=Path, default="improv_default_configspace.json",
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
