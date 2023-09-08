@@ -391,7 +391,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--runtime",
-        default=20000,
+        default=18000,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -404,7 +404,7 @@ if __name__ == "__main__":
     parser.add_argument(
         "--min_budget", type=float, default=8, help="Minimum budget (image_size) for BOHB"
     )
-    parser.add_argument("--eta", type=int, default=2, help="eta for BOHB")
+    parser.add_argument("--eta", type=int, default=3, help="eta for BOHB")
     parser.add_argument("--seed", type=int, default=0, help="random seed")
     parser.add_argument(
         "--device", type=str, default="cpu", help="device to run the models"
