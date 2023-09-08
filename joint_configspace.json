@@ -35,7 +35,7 @@
       "name": "learning_rate_init",
       "type": "uniform_float",
       "log": false,
-      "lower": 0.001,
+      "lower": 0.0001,
       "upper": 0.01,
       "default": 0.0055
     },
