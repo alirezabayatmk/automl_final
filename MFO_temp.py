@@ -12,6 +12,7 @@ from typing import Any, Mapping, Optional
 from functools import partial
 import time
 
+import ConfigSpace.configuration_space
 import numpy as np
 import torch
 
@@ -22,6 +23,7 @@ from ConfigSpace import (
     Integer,
     Constant,
     InCondition,
+    LessThanCondition,
     Categorical
 )
 from ConfigSpace.read_and_write import json as cs_json
@@ -92,6 +94,8 @@ def configuration_space(
 
         # Add multiple conditions on hyperparameters at once:
         cs.add_conditions([use_conv_layer_2, use_conv_layer_1, use_fc_layer_2, use_fc_layer_1])
+
+
     else:
         with open(cs_file, "r") as fh:
             cs_string = fh.read()
@@ -174,7 +178,7 @@ def cnn_from_cfg(
     ds_path = cfg["datasetpath"]
 
     # unchangeable constants that need to be adhered to, the maximum fidelities
-    img_size = max(4, int(np.floor(budget)))  # example fidelity to use
+    img_size = max(8, int(np.floor(budget)))  # example fidelity to use
 
     # Device configuration
     torch.manual_seed(seed)
@@ -403,7 +407,7 @@ if __name__ == "__main__":
     parser.add_argument("--eta", type=int, default=2, help="eta for BOHB")
     parser.add_argument("--seed", type=int, default=0, help="random seed")
     parser.add_argument(
-        "--device", type=str, default="gpu", help="device to run the models"
+        "--device", type=str, default="cpu", help="device to run the models"
     )
     parser.add_argument(
         "--workers", type=int, default=10, help="num of workers to use with BOHB"
@@ -433,7 +437,7 @@ if __name__ == "__main__":
         default="INFO",
         help="Logging level",
     )
-    parser.add_argument('--configspace', type=Path, default="default_configspace.json",
+    parser.add_argument('--configspace', type=Path, default="joint_configspace.json",
                         help='Path to file containing the configuration space')
     parser.add_argument('--datasetpath', type=Path, default=Path('./data/'),
                         help='Path to directory containing the dataset')
@@ -451,7 +455,7 @@ if __name__ == "__main__":
 
     # Setting up SMAC to run BOHB
     scenario = Scenario(
-        name="MF_default_img_size).",
+        name="MF_joint_configspace_img_size",
         configspace=configspace,
         deterministic=True,
         output_directory=args.working_dir,
@@ -479,6 +483,31 @@ if __name__ == "__main__":
 
     # Start optimization
     incumbent = smac.optimize()
-    print("incumbent: ", incumbent)
+    logging.info(f"incumbent: {incumbent}")
+    """log_incumbent = ConfigurationSpace({
+              "batch_size": 34,
+              "budget_type": "img_size",
+              "cv_count": 2,
+              "dataset": "deepweedsx_balanced",
+              "datasetpath": "/Users/adrianeberhardt/Desktop/Master/3/Automated Machine Learning (5LP)/automl_final/data",
+              "device": "cpu",
+              "dropout_rate": 0.2,
+              "global_avg_pooling": "true",
+              "kernel_size": 3,
+              "learning_rate_init": 0.000601710168594298,
+              "n_channels_conv_0": 180,
+              "n_channels_fc_0": 127,
+              "n_conv_layers": 2,
+              "n_fc_layers": 2,
+              "use_BN": "true",
+              "n_channels_conv_1": 415,
+              "n_channels_fc_1": 51,
+              "optimizer": "AdamW",
+              "train_criterion": "CrossEntropyLoss"
+            }).sample_configuration(1)
+    logging.info(f"log_incumbent: {log_incumbent}")"""
     test_accuracy = final_training(incumbent, args.seed)
-    print("Test accuracy: ", incumbent)
+    #log_test_acc = final_training(log_incumbent, args.seed)
+    with open('test_acc.txt', 'w') as f:
+        f.write('test_acc = ' + str(test_accuracy) + '\n')
+    print("Test accuracy: ", test_accuracy)
