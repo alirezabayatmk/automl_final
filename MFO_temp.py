@@ -391,7 +391,7 @@ if __name__ == "__main__":
     )
     parser.add_argument(
         "--runtime",
-        default=18000,
+        default=16200,
         type=int,
         help="Running time (seconds) allocated to run the algorithm",
     )
@@ -410,10 +410,10 @@ if __name__ == "__main__":
         "--device", type=str, default="cpu", help="device to run the models"
     )
     parser.add_argument(
-        "--workers", type=int, default=10, help="num of workers to use with BOHB"
+        "--workers", type=int, default=14, help="num of workers to use with BOHB"
     )
     parser.add_argument(
-        "--n_trials", type=int, default=500, help="Number of iterations to run SMAC for"
+        "--n_trials", type=int, default=250, help="Number of iterations to run SMAC for"
     )
     parser.add_argument(
         "--cv_count",
